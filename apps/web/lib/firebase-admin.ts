@@ -21,3 +21,4 @@ if (!admin.apps.length) {
 
 export const adminDb = admin.firestore();
 export const adminStorage = admin.storage();
+export const FieldValue = admin.firestore.FieldValue;

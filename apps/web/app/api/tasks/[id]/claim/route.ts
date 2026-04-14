@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '../../../../lib/firebase-admin';
+import { adminDb, FieldValue } from '@/lib/firebase-admin';
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -17,7 +17,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const volRef = adminDb.collection('volunteers').doc(volunteerId);
     await volRef.update({
-      currentActiveTasks: adminDb.FieldValue.increment(1)
+      currentActiveTasks: FieldValue.increment(1)
     });
 
     return NextResponse.json({ success: true, status: 'CLAIMED' });

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb, adminStorage } from '../../../../lib/firebase-admin';
+import { adminDb, adminStorage } from '@/lib/firebase-admin';
 
 
 
