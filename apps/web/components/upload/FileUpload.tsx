@@ -9,6 +9,7 @@ export default function FileUpload({ onUploadSuccess }: { onUploadSuccess: () =>
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState("");
   const [mode, setMode] = useState<"file" | "text">("text");
+  const MAX_REPORT_LENGTH = 2000;
   const { toast } = useToast();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,18 +62,28 @@ export default function FileUpload({ onUploadSuccess }: { onUploadSuccess: () =>
 
       {mode === "text" ? (
         <div className="flex flex-col gap-2">
-          <textarea 
-            className="bg-slate-800 border bg-transparent border-slate-700 rounded-lg p-2 text-sm text-slate-200 outline-none focus:border-cyan-500 h-20 resize-none"
-            placeholder="Type field report here..."
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
+          <div className="relative">
+            <textarea 
+              className={`w-full bg-slate-800 border bg-transparent border-slate-700 rounded-lg p-3 text-sm text-slate-200 outline-none transition-all focus:border-cyan-500 h-24 resize-none ${text.length > MAX_REPORT_LENGTH ? 'border-neon-red focus:border-neon-red' : ''}`}
+              placeholder="Describe the emergency, location, and needed resources..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+            <div className={`absolute bottom-2 right-3 text-[10px] font-mono ${text.length > MAX_REPORT_LENGTH ? 'text-neon-red' : 'text-slate-500'}`}>
+              {text.length}/{MAX_REPORT_LENGTH}
+            </div>
+          </div>
           <button 
-            disabled={loading || !text}
+            disabled={loading || !text.trim() || text.length > MAX_REPORT_LENGTH}
             onClick={submitText}
-            className="bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 text-white text-xs font-bold py-2 rounded-lg transition-colors"
+            className="bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-xs font-bold py-2.5 rounded-lg transition-all shadow-lg active:scale-[0.98]"
           >
-            {loading ? "Processing..." : "Submit Report"}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                Infiltrating Grid...
+              </span>
+            ) : "Submit Tactical Intelligence"}
           </button>
         </div>
       ) : (

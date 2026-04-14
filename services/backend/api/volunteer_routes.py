@@ -12,12 +12,12 @@ router = APIRouter()
 # ── Request / Response Models ──────────────────────────────────────────────────
 
 class VolunteerCreateReq(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100)
-    phone: Optional[str] = Field(None, max_length=20)
+    name: str = Field(..., min_length=2, max_length=100)
+    phone: Optional[str] = Field(None, pattern=r"^\+?[0-9]{10,15}$")
     skills: List[str] = Field(default_factory=list)
     lat: float = Field(..., ge=-90, le=90)
     lng: float = Field(..., ge=-180, le=180)
-    location_name: str = Field(..., min_length=1, max_length=200)
+    location_name: str = Field(..., min_length=2, max_length=200)
 
 
 class VolunteerStatusReq(BaseModel):
@@ -31,13 +31,13 @@ class VolunteerStatusReq(BaseModel):
 
 
 class SkillUpdateReq(BaseModel):
-    volunteer_id: str
-    skill: str = Field(..., min_length=1, max_length=80)
+    volunteer_id: str = Field(..., pattern=r"^[a-f0-9-]{36}$")
+    skill: str = Field(..., min_length=2, max_length=80)
 
 
 class AssignTaskReq(BaseModel):
-    volunteer_id: str
-    task_id: str
+    volunteer_id: str = Field(..., pattern=r"^[a-f0-9-]{36}$")
+    task_id: str = Field(..., pattern=r"^[a-f0-9-]{12,36}$")
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────

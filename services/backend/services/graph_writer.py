@@ -1,4 +1,5 @@
 from services.neo4j_service import neo4j_service
+from services.firebase_service import firebase_service
 import uuid
 import logging
 
@@ -98,6 +99,25 @@ async def write_extraction_to_graph(extraction: dict) -> str:
                      # Handle other causal edges if generated in advanced queries
 
             # In a real app we'd also push real-time to Firestore.
+            firebase_service.add_notification(
+                title="New Emergency Reported",
+                message=f"A new {props.get('type', 'emergency')} has been reported. Severity: {props.get('urgency_score', 0.5)*10}/10",
+                n_type="URGENT" if props.get('urgency_score', 0.5) > 0.7 else "INFO"
+            )
+            
+            loc_idx = next((i for i, n in enumerate(nodes) if n["label"] == "Location"), -1)
+            loc_node = nodes[loc_idx] if loc_idx != -1 else {}
+            lp = loc_node.get("properties", {})
+            
+            # Create a task in Firestore for tracking
+            firebase_service.create_task_from_need(need_id, {
+                "type": props.get("type", "unknown"),
+                "description": props.get("description", ""),
+                "urgency_score": props.get("urgency_score", 0.5),
+                "lat": lp.get("lat", 0.0),
+                "lng": lp.get("lng", 0.0),
+                "location_name": lp.get("name", "Unknown Area")
+            })
             
         return need_id
     except Exception as e:

@@ -10,14 +10,15 @@ export interface FirestoreTask {
   status: "OPEN" | "CLAIMED" | "SUBMITTED" | "VERIFIED" | "MANUAL_REVIEW" | "REJECTED";
   location: { lat: number; lng: number; name: string };
   claimedBy: string | null;
-  claimedAt: Date | null;
+  claimedAt: any | null;
   verificationImageUrl: string | null;
   verificationResult: {
     verified: boolean;
     confidence_score: number;
     reasoning: string;
   } | null;
-  createdAt: Date;
+  createdAt: any;
+  urgency: number;
 }
 
 export interface FirestoreVolunteer {
@@ -65,5 +66,15 @@ export interface SimulationComparison {
     optimized: SimulationResult;
     delta_completion_rate: number;
   };
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: "INFO" | "URGENT" | "SUCCESS";
+  timestamp: any;
+  createdAt?: any;
+  read: boolean;
 }
 

@@ -2,7 +2,7 @@ import os
 import re
 import logging
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from services.neo4j_service import neo4j_service
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ prompt = PromptTemplate(
 
 async def text_to_cypher(question: str) -> dict:
     try:
-        llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
         formatted_prompt = prompt.format(schema=SCHEMA_CONTEXT, question=question)
         
         response = llm.invoke(formatted_prompt)

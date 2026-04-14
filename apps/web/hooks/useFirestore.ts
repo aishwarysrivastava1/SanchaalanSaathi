@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { collection, query, where, orderBy, onSnapshot, doc } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { FirestoreTask, FirestoreVolunteer } from "../lib/types";
+import { FirestoreTask, FirestoreVolunteer, Notification } from "../lib/types";
 
 export function useTasks(statusFilter?: string) {
   const [tasks, setTasks] = useState<FirestoreTask[]>([]);
@@ -59,4 +59,29 @@ export function useVolunteer(uid: string | undefined) {
   }, [uid]);
 
   return { volunteer, loading };
+}
+
+export function useNotifications() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, "notifications"), orderBy("timestamp", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data: Notification[] = [];
+      snapshot.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() } as Notification);
+      });
+      setNotifications(data);
+      setLoading(false);
+    }, (error) => {
+      console.error("Firestore error:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  return { notifications, loading };
 }

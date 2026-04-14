@@ -11,6 +11,7 @@ from twilio.request_validator import RequestValidator
 
 from services.gemini_service import extract_entities, extract_entities_from_image, extract_entities_from_audio
 from services.graph_writer import write_extraction_to_graph
+from engine.matcher import perform_auto_assignment
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -41,18 +42,22 @@ async def process_voice_recording(recording_url: str):
 
         extraction = await extract_entities_from_audio(audio_data, "audio/wav")
         await write_extraction_to_graph(extraction)
-        logger.info("Voice report ingested successfully")
+        await perform_auto_assignment() # Run in the same background thread for voice
+        logger.info("Voice report ingested and auto-assigned successfully")
     except Exception as e:
         logger.error(f"Failed to process voice recording: {e}")
 
 # --- API Routes ---
 
+from pydantic import BaseModel, Field
+from typing import Optional
+
 class TextIngestReq(BaseModel):
-    text: str
+    text: str = Field(..., min_length=10, max_length=2000)
     language: Optional[str] = "en"
 
 @router.post("/text")
-async def ingest_text(req: TextIngestReq):
+async def ingest_text(req: TextIngestReq, background_tasks: BackgroundTasks):
     extraction = await extract_entities(req.text, req.language)
     if not extraction or "error" in extraction and extraction["error"]:
         raise HTTPException(status_code=500, detail=extraction.get("error", "Unknown extraction error"))
@@ -60,11 +65,14 @@ async def ingest_text(req: TextIngestReq):
     need_id = await write_extraction_to_graph(extraction)
     if not need_id:
         raise HTTPException(status_code=500, detail="Failed to write graph entities")
-        
+    
+    # Trigger Auto-Assignment 
+    background_tasks.add_task(perform_auto_assignment)
+    
     return {"success": True, "need_id": need_id, "nodes_created": len(extraction.get("nodes", []))}
 
 @router.post("/document")
-async def ingest_document(file: UploadFile = File(...)):
+async def ingest_document(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     image_bytes = await file.read()
     mime_type = file.content_type or "image/jpeg"
     
@@ -73,6 +81,10 @@ async def ingest_document(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=extraction.get("error", "Unknown extraction error"))
         
     need_id = await write_extraction_to_graph(extraction)
+    
+    # Trigger Auto-Assignment 
+    background_tasks.add_task(perform_auto_assignment)
+    
     return {"success": True, "need_id": need_id, "text_extracted": "Processed natively via Gemini Vision"}
 
 @router.post("/voice", dependencies=[Depends(verify_twilio_signature)])

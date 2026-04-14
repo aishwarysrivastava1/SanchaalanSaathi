@@ -60,6 +60,21 @@ export async function fetchVolunteers() {
   }
 }
 
+export async function createVolunteer(data: any): Promise<any> {
+    try {
+        const res = await fetch(`${API_BASE}/api/volunteers`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error("Failed to create volunteer");
+        return res.json();
+    } catch (error) {
+        handleApiError(error, "createVolunteer");
+        throw error;
+    }
+}
+
 export async function fetchHotspots(): Promise<HotspotResult[]> {
   try {
     const res = await fetch(`${API_BASE}/api/graph/hotspots`);

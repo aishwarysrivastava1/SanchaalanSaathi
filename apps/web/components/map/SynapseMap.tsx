@@ -8,11 +8,13 @@ declare const google: any;
 
 interface SynapseMapProps {
   needs: NeedNode[];
+  volunteers: any[];
   hotspots: HotspotResult[];
+  showVolunteers: boolean;
   onMarkerClick?: (need: NeedNode) => void;
 }
 
-export default function SynapseMap({ needs, hotspots, onMarkerClick }: SynapseMapProps) {
+export default function SynapseMap({ needs, volunteers, hotspots, showVolunteers, onMarkerClick }: SynapseMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<any>(null);
   const markersRef = useRef<any[]>([]);
@@ -101,7 +103,31 @@ export default function SynapseMap({ needs, hotspots, onMarkerClick }: SynapseMa
 
       markersRef.current.push(marker);
     });
-  }, [map, needs, hotspots, onMarkerClick]);
+
+    // Add Volunteer Markers
+    if (showVolunteers) {
+      volunteers.forEach(v => {
+        if (!v.location || typeof v.location.lat !== 'number' || typeof v.location.lng !== 'number') return;
+        
+        const isBusy = v.availability_status === 'BUSY';
+        const color = isBusy ? "#a855f7" : "#06b6d4"; // Purple = Busy, Cyan = Active
+        
+        const iconUrl = `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${encodeURIComponent(color)}"%3E%3Cpath d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/%3E%3C/svg%3E`;
+
+        const marker = new google.maps.Marker({
+          position: { lat: v.location.lat, lng: v.location.lng },
+          map: map,
+          title: `Volunteer: ${v.name} (${v.availability_status})`,
+          icon: {
+            url: iconUrl,
+            scaledSize: new google.maps.Size(28, 28),
+          }
+        });
+
+        markersRef.current.push(marker);
+      });
+    }
+  }, [map, needs, volunteers, hotspots, showVolunteers, onMarkerClick]);
 
   return <div ref={mapRef} className="w-full h-full rounded-xl overflow-hidden shadow-2xl border border-slate-800" />;
 }
