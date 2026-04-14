@@ -1,24 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { initializeApp, getApps, cert, ServiceAccount } from "firebase-admin/app";
-
-// Initialize Firebase Admin (server-side)
-function initFirebaseAdmin() {
-  if (getApps().length > 0) return;
-
-  const saJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  if (saJson) {
-    const serviceAccount: ServiceAccount = JSON.parse(saJson);
-    initializeApp({ credential: cert(serviceAccount) });
-    return;
-  }
-
-  initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID });
-}
-
-initFirebaseAdmin();
-export const adminDb = getFirestore();
+import { adminDb, FieldValue } from '@/lib/firebase-admin';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
