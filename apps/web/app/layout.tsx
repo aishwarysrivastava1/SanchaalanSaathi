@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { Outfit } from 'next/font/google'
 import './globals.css'
+import { ToastProvider } from '../components/ui/ToastProvider'
+import { AuthProvider } from '../lib/auth'
 
 const font = Outfit({ subsets: ['latin'] })
 
@@ -26,7 +28,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${font.className} bg-slate-950 text-slate-50 scanline`}>
-        {children}
+        <AuthProvider>
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   )

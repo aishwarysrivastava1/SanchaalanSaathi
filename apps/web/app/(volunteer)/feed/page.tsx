@@ -4,18 +4,20 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTasks } from "../../../hooks/useFirestore";
 import { useAuth } from "../../../lib/auth";
+import { useToast } from "../../../hooks/useToast";
 import TaskCard from "../../../components/volunteer/TaskCard";
 
 export default function TaskFeed() {
   const router = useRouter();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [filter, setFilter] = useState<"ALL" | "OPEN">("OPEN");
   
   // Use custom firestore hook
   const { tasks, loading } = useTasks(filter === "OPEN" ? "OPEN" : undefined);
 
   const handleClaim = async (taskId: string) => {
-    if (!user) return alert("Must be logged in");
+    if (!user) { toast("You must be logged in to claim tasks", "warning"); return; }
     try {
       const res = await fetch(`/api/tasks/${taskId}/claim`, {
         method: "POST",
@@ -23,12 +25,13 @@ export default function TaskFeed() {
         body: JSON.stringify({ volunteerId: user.uid }),
       });
       if (res.ok) {
+        toast("Task claimed! Head to your mission.", "success");
         router.push(`/task/${taskId}`);
       } else {
-        alert("Failed to claim task. Someone else may have taken it.");
+        toast("Couldn't claim — someone else may have taken it.", "error");
       }
     } catch (e) {
-      alert("Error claiming task");
+      toast("Network error while claiming task.", "error");
     }
   };
 

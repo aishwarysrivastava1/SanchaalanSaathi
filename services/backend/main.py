@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 
-from api import graph_routes, seed_routes, ingest_routes, simulation_routes
+from api import graph_routes, seed_routes, ingest_routes, simulation_routes, analytics_routes, volunteer_routes
 from services.neo4j_service import neo4j_service
 
 load_dotenv()
@@ -17,7 +17,7 @@ async def lifespan(app: FastAPI):
     await neo4j_service.close_driver()
 
 app = FastAPI(
-    title="Synapse AI Backend", 
+    title="Synapse AI Backend",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -36,7 +36,9 @@ async def health():
 app.include_router(graph_routes.router, prefix="/api/graph", tags=["Graph"])
 app.include_router(seed_routes.router, prefix="/api/seed", tags=["Seed"])
 app.include_router(ingest_routes.router, prefix="/api/ingest", tags=["Ingest"])
-app.include_router(simulation_routes.router, prefix="/api/sim", tags=["Simulation"])
+app.include_router(simulation_routes.router, prefix="/api/sim",        tags=["Simulation"])
+app.include_router(analytics_routes.router,  prefix="/api/analytics",  tags=["Analytics"])
+app.include_router(volunteer_routes.router,  prefix="/api/volunteers",  tags=["Volunteers"])
 
 if __name__ == "__main__":
     import uvicorn

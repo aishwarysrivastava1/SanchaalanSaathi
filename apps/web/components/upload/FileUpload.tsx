@@ -2,21 +2,24 @@
 
 import React, { useState } from "react";
 import { ingestDocument, ingestText } from "../../lib/api";
-import { UploadCloud, Type } from "lucide-react"; // Corrected icon imports
+import { useToast } from "../../hooks/useToast";
+import { UploadCloud, Type } from "lucide-react";
 
 export default function FileUpload({ onUploadSuccess }: { onUploadSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState("");
   const [mode, setMode] = useState<"file" | "text">("text");
+  const { toast } = useToast();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     setLoading(true);
     try {
       await ingestDocument(e.target.files[0]);
+      toast("Document ingested and graph updated.", "success");
       onUploadSuccess();
     } catch (err) {
-      alert("Upload failed.");
+      toast("Upload failed. Check your Gemini API key.", "error");
     } finally {
       setLoading(false);
     }
@@ -28,9 +31,10 @@ export default function FileUpload({ onUploadSuccess }: { onUploadSuccess: () =>
     try {
       await ingestText(text);
       setText("");
+      toast("Report ingested and graph updated.", "success");
       onUploadSuccess();
     } catch (err) {
-      alert("Submission failed.");
+      toast("Submission failed. Check your Gemini API key.", "error");
     } finally {
       setLoading(false);
     }
@@ -39,16 +43,18 @@ export default function FileUpload({ onUploadSuccess }: { onUploadSuccess: () =>
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg w-full">
       <div className="flex gap-2 mb-3 bg-slate-950 p-1 rounded-lg w-max">
-        <button 
-          onClick={() => setMode("text")} 
-          className={`px-3 py-1 text-xs rounded font-medium transition-colors ${mode === 'text' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-white'}`}
+        <button
+          onClick={() => setMode("text")}
+          className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded font-medium transition-colors ${mode === 'text' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-white'}`}
         >
+          <Type size={12} />
           Text Report
         </button>
-        <button 
-          onClick={() => setMode("file")} 
-          className={`px-3 py-1 text-xs rounded font-medium transition-colors ${mode === 'file' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-white'}`}
+        <button
+          onClick={() => setMode("file")}
+          className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded font-medium transition-colors ${mode === 'file' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-white'}`}
         >
+          <UploadCloud size={12} />
           Photo/PDF
         </button>
       </div>
@@ -77,8 +83,15 @@ export default function FileUpload({ onUploadSuccess }: { onUploadSuccess: () =>
             onChange={handleFileChange}
             disabled={loading}
           />
-          <div className="text-slate-400 flex flex-col items-center">
-             {loading ? <span className="animate-pulse">Analyzing...</span> : "Drag & Drop or Click to Upload"}
+          <div className="text-slate-400 flex flex-col items-center gap-2">
+            {loading ? (
+              <span className="animate-pulse text-sm">Analyzing...</span>
+            ) : (
+              <>
+                <UploadCloud size={28} className="text-slate-500" />
+                <span className="text-xs">Drag & Drop or Click to Upload</span>
+              </>
+            )}
           </div>
         </div>
       )}

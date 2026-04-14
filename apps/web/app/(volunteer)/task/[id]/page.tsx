@@ -5,13 +5,16 @@ import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../../lib/firebase";
 import { useAuth } from "../../../../lib/auth";
+import { useToast } from "../../../../hooks/useToast";
 import CameraCapture from "../../../../components/volunteer/CameraCapture";
+import { VoiceBriefing } from "../../../../components/volunteer/VoiceBriefing";
 import { FirestoreTask } from "../../../../lib/types";
 
 export default function TaskDetail() {
   const { id } = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [task, setTask] = useState<FirestoreTask | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -42,13 +45,13 @@ export default function TaskDetail() {
       });
       
       if (res.ok) {
-        alert("Task submitted for AI verification!");
+        toast("Submitted for AI verification! XP incoming.", "success");
         router.push("/feed");
       } else {
-        alert("Submission failed.");
+        toast("Submission failed. Try again.", "error");
       }
     } catch (e) {
-      alert("Error occurred.");
+      toast("Network error during submission.", "error");
     } finally {
       setSubmitting(false);
     }
@@ -75,6 +78,14 @@ export default function TaskDetail() {
         <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
           <h3 className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Required Evidence</h3>
           <p className="text-sm text-slate-300 font-medium">{task.expectedEvidence}</p>
+        </div>
+
+        <div className="mt-4">
+          <VoiceBriefing
+            taskTitle={task.title}
+            taskDescription={task.description}
+            taskLocation={task.location?.name || "Unknown location"}
+          />
         </div>
       </div>
 

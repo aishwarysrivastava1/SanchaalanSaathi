@@ -27,22 +27,27 @@ const config: Config = {
       },
       animation: {
         'glow-pulse': 'glow-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'typing': 'typing 2s steps(40, end)',
-        'scanline': 'scanline 8s linear infinite',
+        'typing':     'typing 2s steps(40, end)',
+        'scanline':   'scanline 8s linear infinite',
+        'slice-in':   'slice-in 0.3s ease-out',
       },
       keyframes: {
         'glow-pulse': {
           '0%, 100%': { opacity: '1', boxShadow: '0 0 10px rgba(0, 243, 255, 0.2)' },
-          '50%': { opacity: '.7', boxShadow: '0 0 20px rgba(0, 243, 255, 0.5)' },
+          '50%':      { opacity: '.7', boxShadow: '0 0 20px rgba(0, 243, 255, 0.5)' },
         },
         'typing': {
           'from': { width: '0' },
-          'to': { width: '100%' },
+          'to':   { width: '100%' },
         },
         'scanline': {
-          '0%': { transform: 'translateY(-100%)' },
-          '100%': { transform: 'translateY(100vh)' }
-        }
+          '0%':   { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(100vh)' },
+        },
+        'slice-in': {
+          '0%':   { opacity: '0', transform: 'translateY(-8px) scaleY(0.95)' },
+          '100%': { opacity: '1', transform: 'translateY(0)   scaleY(1)' },
+        },
       }
     },
   },

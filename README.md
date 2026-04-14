@@ -12,6 +12,8 @@
 
 Built by **Team CrownBreakers** for the Google International Hackathon — Smart Resource Allocation for NGOs.
 
+Contributors: **Aishwary Srivastava, Eshaan Singla, Sukhmanpreet Singh**
+
 ---
 
 ## Features

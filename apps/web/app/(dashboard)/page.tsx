@@ -6,6 +6,7 @@ import StatsBar from "../../components/dashboard/StatsBar";
 import NeedList from "../../components/dashboard/NeedList";
 import FileUpload from "../../components/upload/FileUpload";
 import SimulationPanel from "../../components/dashboard/SimulationPanel";
+import AnalyticsPanel from "../../components/dashboard/AnalyticsPanel";
 import { fetchNeeds, fetchVolunteers, fetchHotspots } from "../../lib/api";
 import { NeedNode, HotspotResult } from "../../lib/types";
 
@@ -52,10 +53,14 @@ export default function Dashboard() {
         </div>
         
         <FileUpload onUploadSuccess={loadData} />
-        
-        <NeedList 
-          needs={needs} 
-          onNeedClick={(need) => setSelectedNeed(need)} 
+
+        <div className="mt-4">
+          <AnalyticsPanel needs={needs} vols={vols} />
+        </div>
+
+        <NeedList
+          needs={needs}
+          onNeedClick={(need) => setSelectedNeed(need)}
         />
       </div>
       
