@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Light mode tokens ─────────────────────────────── */
 :root {
   --brand-primary:   #115E54;
   --brand-secondary: #2A8256;
@@ -11,15 +12,59 @@
   --text-primary:    #111827;
   --text-secondary:  #6B7280;
   --border-color:    #E5E7EB;
+
+  --bg-base:    #F5F6F1;
+  --bg-surface: #FFFFFF;
+  --bg-muted:   #F9FAFB;
+}
+
+/* ── Dark mode tokens ──────────────────────────────── */
+.dark {
+  --brand-bg:       #030712;
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color:   #1f2937;
+
+  --bg-base:    #030712;
+  --bg-surface: #111827;
+  --bg-muted:   #1f2937;
+
+  color-scheme: dark;
 }
 
 body {
   color: var(--text-primary);
-  background: var(--brand-bg);
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
-/* ── Scrollbar ─────────────────────────────────── */
+/* ── Dark mode cascade overrides ───────────────────── */
+/* These let existing components pick up dark mode without touching each file */
+.dark .bg-white            { background-color: #111827; }
+.dark .bg-\[\#F5F6F1\]    { background-color: #030712; }
+.dark .bg-gray-50          { background-color: #1f2937; }
+.dark .bg-gray-100         { background-color: #1f2937; }
+
+.dark .text-gray-900       { color: #f1f5f9; }
+.dark .text-gray-800       { color: #e2e8f0; }
+.dark .text-gray-700       { color: #cbd5e1; }
+.dark .text-gray-600       { color: #94a3b8; }
+.dark .text-gray-500       { color: #64748b; }
+.dark .text-gray-400       { color: #475569; }
+
+.dark .border-gray-200     { border-color: #1f2937; }
+.dark .border-gray-100     { border-color: #111827; }
+.dark .border-gray-300     { border-color: #374151; }
+
+.dark .shadow-sm           { box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.dark .shadow-md           { box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+.dark .shadow-lg           { box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+
+.dark input,
+.dark textarea             { background-color: #1f2937; color: #f1f5f9; border-color: #374151; }
+.dark input::placeholder   { color: #4b5563; }
+
+/* ── Scrollbar ─────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: #F3F4F6; }
 ::-webkit-scrollbar-thumb {
@@ -28,23 +73,29 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover { background: rgba(17, 94, 84, 0.55); }
 
-/* ── Card panel (replaces dark hud-panel) ──────── */
+.dark ::-webkit-scrollbar-track { background: #1f2937; }
+.dark ::-webkit-scrollbar-thumb { background: rgba(17, 94, 84, 0.45); }
+
+/* ── HUD panel ──────────────────────────────────────── */
 .hud-panel {
   background: #FFFFFF;
   border: 1px solid var(--border-color);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
-
+.dark .hud-panel {
+  background: #111827;
+  border-color: #1f2937;
+}
 .hud-panel:hover {
   border-color: rgba(17, 94, 84, 0.22);
   box-shadow: 0 4px 12px rgba(17, 94, 84, 0.09);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* scanline is disabled in the new design */
+/* scanline disabled */
 .scanline::before { content: none; }
 
-/* ── Sidebar custom scrollbar ─────────────────── */
+/* ── Sidebar custom scrollbar ───────────────────────── */
 .custom-scrollbar::-webkit-scrollbar       { width: 3px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb {
@@ -55,7 +106,7 @@ body {
   background: rgba(17, 94, 84, 0.45);
 }
 
-/* ── Animations ────────────────────────────────── */
+/* ── Animations ─────────────────────────────────────── */
 @keyframes slice-in {
   from { transform: translateY(-8px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
@@ -83,21 +134,19 @@ body {
 
 .animate-glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
 
-/* ── Float animation (logo, hero elements) ─────── */
 @keyframes float {
   0%, 100% { transform: translateY(0px);  }
   50%       { transform: translateY(-6px); }
 }
 .animate-float { animation: float 3.5s ease-in-out infinite; }
 
-/* ── Slide-up entrance ──────────────────────────── */
 @keyframes slide-up {
   from { transform: translateY(12px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
 .animate-slide-up { animation: slide-up 0.5s ease-out both; }
 
-/* ── Stagger helpers ────────────────────────────── */
+/* ── Stagger helpers ────────────────────────────────── */
 .delay-100 { animation-delay: 0.1s; }
 .delay-200 { animation-delay: 0.2s; }
 .delay-300 { animation-delay: 0.3s; }

@@ -32,6 +32,7 @@ export interface FirestoreVolunteer {
   totalTasksCompleted: number;
   currentActiveTasks: number;
   availabilityStatus: "ACTIVE" | "BUSY" | "OFFLINE";
+  role: "NGO" | "Volunteer" | null;
 }
 
 export interface NeedNode {

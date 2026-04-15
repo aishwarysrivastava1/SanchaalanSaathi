@@ -3,6 +3,7 @@ import { Outfit } from 'next/font/google'
 import './globals.css'
 import { ToastProvider } from '../components/ui/ToastProvider'
 import { AuthProvider } from '../lib/auth'
+import { ThemeProvider } from '../components/ui/ThemeProvider'
 
 const font = Outfit({ subsets: ['latin'] })
 
@@ -26,13 +27,23 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`${font.className} bg-[#F5F6F1] text-gray-900`}>
-        <AuthProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
-        </AuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Prevent flash of incorrect theme on load */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.classList.toggle('dark',t==='dark')}catch(e){}`,
+          }}
+        />
+      </head>
+      <body className={`${font.className} bg-[#F5F6F1] dark:bg-gray-950 text-gray-900 dark:text-gray-100`}>
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

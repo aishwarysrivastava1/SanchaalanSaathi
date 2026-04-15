@@ -1,171 +1,168 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
-import SaathiMap from "../../components/map/SynapseMap";
-import StatsBar from "../../components/dashboard/StatsBar";
-import NeedList from "../../components/dashboard/NeedList";
-import FileUpload from "../../components/upload/FileUpload";
-import SimulationPanel from "../../components/dashboard/SimulationPanel";
-import AnalyticsPanel from "../../components/dashboard/AnalyticsPanel";
-import NotificationBell from "../../components/dashboard/NotificationBell";
-import TaskKanban from "../../components/dashboard/TaskKanban";
-import VolunteerRegistration from "../../components/dashboard/VolunteerRegistration";
-import { Map as MapIcon, LayoutDashboard, Users } from "lucide-react";
-import { fetchNeeds, fetchVolunteers, fetchHotspots } from "../../lib/api";
-import { NeedNode, HotspotResult } from "../../lib/types";
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../lib/auth";
+import { ThemeToggle } from "../../components/ui/ThemeToggle";
+import { Building2, Users, MapPin, BarChart3, Shield, Zap, CheckCircle, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
-export default function Dashboard() {
-  const [needs, setNeeds] = useState<NeedNode[]>([]);
-  const [vols, setVols] = useState<any[]>([]);
-  const [hotspots, setHotspots] = useState<HotspotResult[]>([]);
-  const [selectedNeed, setSelectedNeed] = useState<NeedNode | null>(null);
-  const [showVolunteers, setShowVolunteers] = useState(false);
-  const [viewMode, setViewMode] = useState<"map" | "kanban">("map");
+const NGO_FEATURES = [
+  { icon: MapPin,    text: "Live intelligence map & need visualisation" },
+  { icon: BarChart3, text: "Real-time analytics & task management" },
+  { icon: Users,     text: "Coordinate and register volunteers" },
+  { icon: Shield,    text: "AI-powered verification pipeline" },
+];
 
-  const loadData = useCallback(async () => {
-    try {
-      const fetchedNeeds = await fetchNeeds();
-      setNeeds(fetchedNeeds);
-      const fetchedVols = await fetchVolunteers();
-      setVols(fetchedVols);
-      const fetchedHotspots = await fetchHotspots();
-      setHotspots(fetchedHotspots);
-    } catch (error) {
-      console.error("Failed to sync dashboard data:", error);
-    }
-  }, []);
+const VOLUNTEER_FEATURES = [
+  { icon: MapPin,       text: "Claim open field tasks near you" },
+  { icon: CheckCircle,  text: "Submit photo proof for AI verification" },
+  { icon: Zap,          text: "Earn XP and climb the leaderboard" },
+  { icon: Shield,       text: "Build your reputation score" },
+];
 
+export default function LandingPage() {
+  const { user, role, loading } = useAuth();
+  const router = useRouter();
+
+  // Redirect authenticated users to their dashboard
   useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
-  }, [loadData]);
+    if (loading || !user) return;
+    if (role === null)         router.replace("/select-role");
+    else if (role === "NGO")   router.replace("/ngo-dashboard");
+    else                       router.replace("/volunteer-dashboard");
+  }, [user, role, loading, router]);
+
+  // Show spinner while checking auth
+  if (loading || user) {
+    return (
+      <div className="min-h-screen bg-[#F5F6F1] dark:bg-gray-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#115E54] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col h-screen bg-[#F5F6F1]">
+    <div className="min-h-screen bg-[#F5F6F1] dark:bg-gray-950 flex flex-col relative overflow-hidden">
 
-      {/* ── Top Navigation Bar ──────────────────────────── */}
-      <header className="h-14 bg-white border-b border-gray-200 flex items-center px-5 gap-3 shrink-0 z-20 shadow-sm">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo/logo-icon.png" alt="logo" className="h-8 w-8 object-contain shrink-0" />
-        <div className="leading-none">
-          <p className="text-sm font-bold text-[#115E54]">Sanchaalan Saathi</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Emergency Intelligence Platform</p>
-        </div>
+      {/* Ambient glows */}
+      <div className="pointer-events-none absolute top-[-15%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#115E54]/6 dark:bg-[#115E54]/10 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#48A15E]/5 dark:bg-[#48A15E]/8 blur-3xl" />
 
-        <div className="ml-auto flex items-center gap-2">
-          {/* Volunteer layer toggle */}
-          <button
-            onClick={() => setShowVolunteers(!showVolunteers)}
-            className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg border text-xs font-semibold transition-all ${
-              showVolunteers
-                ? "bg-[#115E54]/10 border-[#115E54]/30 text-[#115E54]"
-                : "bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700"
-            }`}
-          >
-            <Users size={13} />
-            Volunteers
-          </button>
-
-          {/* View mode toggle */}
-          <div className="flex bg-gray-100 rounded-lg border border-gray-200 p-0.5">
-            <button
-              onClick={() => setViewMode("map")}
-              title="Map View"
-              className={`p-1.5 rounded-md transition-all ${
-                viewMode === "map"
-                  ? "bg-white text-[#115E54] shadow-sm"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <MapIcon className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("kanban")}
-              title="Kanban View"
-              className={`p-1.5 rounded-md transition-all ${
-                viewMode === "kanban"
-                  ? "bg-white text-[#115E54] shadow-sm"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <LayoutDashboard className="w-4 h-4" />
-            </button>
+      {/* ── Header ──────────────────────────────────────── */}
+      <header className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200/60 dark:border-gray-800/60 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm">
+        <div className="flex items-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/logo-icon.png" alt="logo" className="h-8 w-8 object-contain" />
+          <div className="leading-none">
+            <p className="text-sm font-bold text-[#115E54]">Sanchaalan Saathi</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Emergency Intelligence Platform</p>
           </div>
-
-          <NotificationBell />
         </div>
+        <ThemeToggle size="sm" />
       </header>
 
-      {/* ── Body ────────────────────────────────────────── */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* ── Hero ────────────────────────────────────────── */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-12">
 
-        {/* Sidebar */}
-        <aside className="w-[320px] shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden animate-[fade-in_0.4s_ease-out]">
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
-            <FileUpload onUploadSuccess={loadData} />
-            <AnalyticsPanel needs={needs} vols={vols} />
-            <VolunteerRegistration onSuccess={loadData} />
-            <NeedList needs={needs} onNeedClick={(need) => setSelectedNeed(need)} />
-          </div>
-        </aside>
+        <div className="text-center mb-10 animate-slide-up">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo/logo-icon.png"
+            alt="Sanchaalan Saathi"
+            className="h-16 w-16 mx-auto mb-5 object-contain animate-float drop-shadow-sm"
+          />
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
+            Coordinating Crisis Response
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 text-base mt-2.5 max-w-md mx-auto leading-relaxed">
+            India's AI-powered emergency volunteer platform — connecting NGOs with field responders in real time.
+          </p>
+        </div>
 
-        {/* Main content */}
-        <main className="flex-1 flex flex-col p-4 gap-4 overflow-hidden animate-[fade-in_0.5s_ease-out]">
-          <StatsBar needs={needs} vols={vols} />
+        {/* ── Portal Cards ───────────────────────────────── */}
+        <div className="grid md:grid-cols-2 gap-5 w-full max-w-3xl animate-slide-up delay-100">
 
-          <div className="flex-1 relative rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm">
-            {viewMode === "map" ? (
-              <>
-                <SaathiMap
-                  needs={needs}
-                  volunteers={vols}
-                  hotspots={hotspots}
-                  showVolunteers={showVolunteers}
-                  onMarkerClick={(need: any) => setSelectedNeed(need)}
-                />
-
-                {/* Selected need detail panel */}
-                {selectedNeed && (
-                  <div className="absolute top-4 right-4 bg-white rounded-xl shadow-lg border border-gray-200 p-5 w-72 z-10 animate-[slice-in_0.3s_ease-out]">
-                    <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-3">
-                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                        selectedNeed.urgency_score >= 0.7 ? "bg-red-500" : "bg-amber-500"
-                      }`} />
-                      <h3 className="font-semibold text-gray-900 text-sm">{selectedNeed.type.toUpperCase()}</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">{selectedNeed.description}</p>
-                    <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-xs text-gray-500 space-y-1.5 mb-4">
-                      <div className="flex justify-between">
-                        <span>Severity Index:</span>
-                        <span className="font-semibold text-amber-600">{(selectedNeed.urgency_score * 10).toFixed(1)}/10</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Status:</span>
-                        <span className={`font-semibold ${selectedNeed.status === "RESOLVED" ? "text-[#2A8256]" : "text-red-500"}`}>
-                          {selectedNeed.status}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setSelectedNeed(null)}
-                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs py-2 rounded-lg transition-all font-semibold"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
-                )}
-
-                <SimulationPanel />
-              </>
-            ) : (
-              <div className="w-full h-full p-4 animate-[fade-in_0.4s_ease-out] overflow-hidden">
-                <TaskKanban />
+          {/* NGO Portal */}
+          <div className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-7 flex flex-col shadow-sm hover:shadow-lg hover:border-[#115E54]/30 dark:hover:border-[#115E54]/40 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 rounded-xl bg-[#115E54]/10 dark:bg-[#115E54]/20 flex items-center justify-center shrink-0">
+                <Building2 size={22} className="text-[#115E54]" />
               </div>
-            )}
+              <div>
+                <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">NGO Portal</h2>
+                <p className="text-xs text-gray-400 dark:text-gray-500">For organisations &amp; coordinators</p>
+              </div>
+            </div>
+
+            <ul className="space-y-2.5 mb-7 flex-1">
+              {NGO_FEATURES.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-400">
+                  <Icon size={14} className="text-[#115E54] shrink-0" />
+                  {text}
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href="/login/ngo"
+              className="flex items-center justify-center gap-2 w-full bg-[#115E54] hover:bg-[#0d4a42] text-white font-semibold py-3 px-5 rounded-xl transition-all active:scale-[0.98] group-hover:shadow-md"
+            >
+              Enter NGO Portal
+              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
           </div>
-        </main>
-      </div>
+
+          {/* Volunteer Portal */}
+          <div className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-7 flex flex-col shadow-sm hover:shadow-lg hover:border-[#48A15E]/30 dark:hover:border-[#48A15E]/40 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 rounded-xl bg-[#48A15E]/10 dark:bg-[#48A15E]/20 flex items-center justify-center shrink-0">
+                <Users size={22} className="text-[#48A15E]" />
+              </div>
+              <div>
+                <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">Volunteer Portal</h2>
+                <p className="text-xs text-gray-400 dark:text-gray-500">For field responders</p>
+              </div>
+            </div>
+
+            <ul className="space-y-2.5 mb-7 flex-1">
+              {VOLUNTEER_FEATURES.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-400">
+                  <Icon size={14} className="text-[#48A15E] shrink-0" />
+                  {text}
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href="/login/volunteer"
+              className="flex items-center justify-center gap-2 w-full bg-[#48A15E] hover:bg-[#3a8f4e] text-white font-semibold py-3 px-5 rounded-xl transition-all active:scale-[0.98] group-hover:shadow-md"
+            >
+              Enter Volunteer Portal
+              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+        </div>
+
+        {/* ── Stats strip ────────────────────────────────── */}
+        <div className="flex items-center gap-6 mt-10 animate-slide-up delay-200">
+          {[
+            { value: "AI-Verified", label: "Task Proofs" },
+            { value: "Real-time", label: "Coordination" },
+            { value: "Free", label: "To Join" },
+          ].map(({ value, label }) => (
+            <div key={label} className="text-center">
+              <p className="text-sm font-bold text-[#115E54]">{value}</p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      {/* ── Footer ──────────────────────────────────────── */}
+      <footer className="relative z-10 text-center py-4 text-xs text-gray-400 dark:text-gray-600">
+        Sanchaalan Saathi — Team CrownBreakers
+      </footer>
     </div>
   );
 }
