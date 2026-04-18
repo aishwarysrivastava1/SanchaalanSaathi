@@ -22,30 +22,21 @@ export default function TaskCard({ task, onClaim }: { task: FirestoreTask; onCla
   const isHighXP  = task.xpReward > 50;
   const statusCfg = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.OPEN;
   const leftBorder = LEFT_BORDER[task.status] ?? "border-l-gray-300";
+  const urgencyDot = isHighXP
+    ? "bg-red-500 animate-pulse"
+    : task.xpReward > 20
+      ? "bg-amber-500"
+      : "bg-[#48A15E]";
 
   return (
-<<<<<<< HEAD
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#115E54]/25 dark:hover:border-[#115E54]/40 transition-all active:scale-[0.99] cursor-default">
+    <div className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 border-l-4 ${leftBorder} rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#115E54]/25 dark:hover:border-[#115E54]/40 transition-all duration-200 group cursor-default`}>
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${urgencyDot}`} />
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-snug truncate">{task.title}</h3>
         </div>
         <span className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2">
-          <Zap size={9} />
-=======
-    <div className={`bg-white border border-gray-200 border-l-4 ${leftBorder} rounded-xl p-4 shadow-sm hover:shadow-md hover:border-gray-300 hover:-translate-y-0.5 transition-all duration-200 group`}>
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className={`w-2 h-2 rounded-full shrink-0 ${
-            isHighXP ? "bg-red-500 animate-pulse" :
-            task.xpReward > 20 ? "bg-amber-500" : "bg-[#48A15E]"
-          }`} />
-          <h3 className="font-semibold text-gray-900 text-sm leading-snug truncate">{task.title}</h3>
-        </div>
-        <span className="flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200/60 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-2">
           <Zap size={8} className="fill-amber-500" />
->>>>>>> b6fd2f7 (Major UI and functionality upgrade)
           +{task.xpReward} XP
         </span>
       </div>
@@ -59,13 +50,8 @@ export default function TaskCard({ task, onClaim }: { task: FirestoreTask; onCla
         </div>
       )}
 
-<<<<<<< HEAD
       <div className="flex justify-between items-center pt-2.5 border-t border-gray-100 dark:border-gray-800">
         <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-[10px] px-2 py-1 rounded-md font-medium">
-=======
-      <div className="flex justify-between items-center pt-2.5 border-t border-gray-100">
-        <span className="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded-md font-medium">
->>>>>>> b6fd2f7 (Major UI and functionality upgrade)
           {task.requiredSkill}
         </span>
 
@@ -78,21 +64,11 @@ export default function TaskCard({ task, onClaim }: { task: FirestoreTask; onCla
             <ArrowRight size={11} className="transition-transform duration-150 group-hover:translate-x-0.5" />
           </button>
         ) : (
-<<<<<<< HEAD
-          <span className={`text-[10px] font-semibold uppercase tracking-wider ${
-            task.status === "VERIFIED"   ? "text-[#2A8256]" :
-            task.status === "CLAIMED"    ? "text-amber-600" :
-            task.status === "SUBMITTED"  ? "text-blue-500" :
-            "text-gray-400 dark:text-gray-500"
-          }`}>
-            {task.status}
-=======
           <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md border ${statusCfg.color} ${statusCfg.bg} ${statusCfg.border}`}>
             {task.status === "VERIFIED"  && <CheckCircle size={9} />}
             {task.status === "CLAIMED"   && <Clock size={9} />}
             {task.status === "SUBMITTED" && <Camera size={9} />}
             {statusCfg.label}
->>>>>>> b6fd2f7 (Major UI and functionality upgrade)
           </span>
         )}
       </div>

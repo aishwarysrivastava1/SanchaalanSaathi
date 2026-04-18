@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { adminDb, adminStorage } from '@/lib/firebase-admin';
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const taskId = params.id;
+    const { id: taskId } = await context.params;
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const volunteerId = formData.get('volunteerId') as string;

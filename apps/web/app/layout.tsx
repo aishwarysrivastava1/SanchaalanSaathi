@@ -4,6 +4,7 @@ import './globals.css'
 import { ToastProvider } from '../components/ui/ToastProvider'
 import { AuthProvider } from '../lib/auth'
 import { ThemeProvider } from '../components/ui/ThemeProvider'
+import { validateProductionEnv } from '../lib/env'
 
 const font = Outfit({ subsets: ['latin'] })
 
@@ -26,6 +27,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  validateProductionEnv()
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>

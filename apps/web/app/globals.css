@@ -4,34 +4,6 @@
 
 /* ── Light mode tokens ─────────────────────────────── */
 :root {
-<<<<<<< HEAD
-  --brand-primary:   #115E54;
-  --brand-secondary: #2A8256;
-  --brand-accent:    #48A15E;
-  --brand-light:     #95C78F;
-  --brand-bg:        #F5F6F1;
-  --text-primary:    #111827;
-  --text-secondary:  #6B7280;
-  --border-color:    #E5E7EB;
-
-  --bg-base:    #F5F6F1;
-  --bg-surface: #FFFFFF;
-  --bg-muted:   #F9FAFB;
-}
-
-/* ── Dark mode tokens ──────────────────────────────── */
-.dark {
-  --brand-bg:       #030712;
-  --text-primary:   #f1f5f9;
-  --text-secondary: #94a3b8;
-  --border-color:   #1f2937;
-
-  --bg-base:    #030712;
-  --bg-surface: #111827;
-  --bg-muted:   #1f2937;
-
-  color-scheme: dark;
-=======
   --brand-primary:      #115E54;
   --brand-secondary:    #2A8256;
   --brand-accent:       #48A15E;
@@ -47,7 +19,24 @@
   --brand-accent-light: #48A15E;
   --brand-success:      #95C78F;
   --bg-canvas:          #F5F6F1;
->>>>>>> b6fd2f7 (Major UI and functionality upgrade)
+
+  --bg-base:            #F5F6F1;
+  --bg-surface:         #FFFFFF;
+  --bg-muted:           #F9FAFB;
+}
+
+/* ── Dark mode tokens ──────────────────────────────── */
+.dark {
+  --brand-bg:       #030712;
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color:   #1f2937;
+
+  --bg-base:        #030712;
+  --bg-surface:     #111827;
+  --bg-muted:       #1f2937;
+
+  color-scheme: dark;
 }
 
 body {
@@ -164,9 +153,6 @@ body {
 }
 .animate-slide-up { animation: slide-up 0.5s ease-out both; }
 
-<<<<<<< HEAD
-/* ── Stagger helpers ────────────────────────────────── */
-=======
 /* ── Slide-in from left (sidebar open) ─────────── */
 @keyframes slide-in-left {
   from { transform: translateX(-16px); opacity: 0; }
@@ -175,7 +161,6 @@ body {
 .animate-slide-in-left { animation: slide-in-left 0.22s ease-out both; }
 
 /* ── Stagger helpers ────────────────────────────── */
->>>>>>> b6fd2f7 (Major UI and functionality upgrade)
 .delay-100 { animation-delay: 0.1s; }
 .delay-200 { animation-delay: 0.2s; }
 .delay-300 { animation-delay: 0.3s; }

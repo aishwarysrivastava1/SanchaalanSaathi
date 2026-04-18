@@ -85,6 +85,10 @@ export function NGOAuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginWithGoogle = async (role: "ngo_admin" | "volunteer", inviteCode?: string): Promise<NGOUser> => {
+    if (!auth) {
+      throw new Error("Firebase auth is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars.");
+    }
+
     const result = await signInWithPopup(auth, new GoogleAuthProvider());
     const data = await api.googleAuth({
       email: result.user.email!,

@@ -44,6 +44,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!auth || !db) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
 
@@ -89,11 +94,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signInWithGoogle = async () => {
+    if (!auth) throw new Error("Firebase auth is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars.");
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   };
 
   const signOut = async () => {
+    if (!auth) return;
     await fbSignOut(auth);
   };
 
@@ -103,6 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
    */
   const setUserRole = async (newRole: UserRole) => {
     if (!user) throw new Error("No authenticated user");
+    if (!db) throw new Error("Firestore is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars.");
     const volRef = doc(db, "volunteers", user.uid);
     await withTimeout(
       setDoc(volRef, { role: newRole }, { merge: true })

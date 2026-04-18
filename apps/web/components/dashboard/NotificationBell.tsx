@@ -23,6 +23,8 @@ export default function NotificationBell() {
   }, []);
 
   const markRead = async (id: string) => {
+    if (!db) return;
+
     try {
       await updateDoc(doc(db, "notifications", id), { read: true });
     } catch (error) {
@@ -31,6 +33,8 @@ export default function NotificationBell() {
   };
 
   const markAllRead = async () => {
+    if (!db) return;
+
     try {
       const batch = writeBatch(db);
       notifications.forEach((n) => {

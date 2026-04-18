@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { adminDb, FieldValue } from '@/lib/firebase-admin';
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const taskId = params.id;
+    const { id: taskId } = await context.params;
     const { volunteerId } = await req.json();
 
     if (!volunteerId) return NextResponse.json({ error: 'volunteerId required' }, { status: 400 });

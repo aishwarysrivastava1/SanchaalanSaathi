@@ -1,7 +1,7 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { Auth, getAuth } from "firebase/auth";
+import { Firestore, getFirestore } from "firebase/firestore";
+import { FirebaseStorage, getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -9,9 +9,17 @@ const firebaseConfig = {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
 };
-console.log("Firebase config loaded with keys:", Object.keys(firebaseConfig).filter(k => firebaseConfig[k as keyof typeof firebaseConfig]));
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+const hasRequiredConfig = Boolean(
+  firebaseConfig.apiKey &&
+  firebaseConfig.authDomain &&
+  firebaseConfig.projectId
+);
+
+const existingApp = getApps()[0];
+const app = existingApp ?? (hasRequiredConfig ? initializeApp(firebaseConfig) : null);
+
+export const firebaseReady = Boolean(app);
+export const auth: Auth = app ? getAuth(app) : (null as unknown as Auth);
+export const db: Firestore = app ? getFirestore(app) : (null as unknown as Firestore);
+export const storage: FirebaseStorage = app ? getStorage(app) : (null as unknown as FirebaseStorage);

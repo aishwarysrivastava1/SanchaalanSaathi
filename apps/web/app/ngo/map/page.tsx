@@ -1,6 +1,6 @@
 "use client";
 
-import DeploymentMap from "../../../../components/map/DeploymentMap";
+import DeploymentMap from "../../../components/map/DeploymentMap";
 
 export default function DeploymentMapPage() {
   return (
