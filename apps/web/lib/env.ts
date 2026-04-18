@@ -49,6 +49,7 @@ function parseJsonFromEnv(rawValue: string) {
 }
 
 export function validateProductionEnv() {
+  if (process.env.NEXT_PHASE === 'phase-production-build') return;
   const shouldEnforce = process.env.VERCEL === '1' || process.env.ENFORCE_ENV_VALIDATION === '1';
   if (!shouldEnforce) return;
   if (!isProd) return;

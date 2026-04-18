@@ -8,7 +8,7 @@ import { useNGOAuth } from "@/lib/ngo-auth";
 // ── Icons ────────────────────────────────────────────────────────────────────
 
 const GoogleIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
     <path d="M17.64 9.2045c0-.638-.0573-1.252-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9087c1.7018-1.5668 2.6836-3.874 2.6836-6.6149z" fill="#4285F4"/>
     <path d="M9 18c2.43 0 4.4673-.8059 5.9564-2.1805l-2.9087-2.2581c-.8059.54-1.8368.8591-3.0477.8591-2.3441 0-4.3282-1.5836-5.036-3.7104H.9574v2.3318C2.4382 15.9832 5.4818 18 9 18z" fill="#34A853"/>
     <path d="M3.964 10.71C3.7841 10.17 3.6818 9.5932 3.6818 9c0-.5932.1023-1.17.2822-1.71V4.9582H.9574C.3477 6.1732 0 7.5477 0 9c0 1.4523.3477 2.8268.9574 4.0418L3.964 10.71z" fill="#FBBC05"/>
@@ -81,10 +81,11 @@ const PARTICLES = [
 export default function LoginPage() {
   const router = useRouter();
   const { user, loading, loginWithGoogle } = useNGOAuth();
-  const [role, setRole] = useState<"ngo_admin" | "volunteer">("ngo_admin");
+  const [role, setRole]             = useState<"ngo_admin" | "volunteer">("ngo_admin");
+  const [authMode, setAuthMode]     = useState<"login" | "signup">("login");
   const [inviteCode, setInviteCode] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [busy, setBusy]             = useState(false);
+  const [error, setError]           = useState("");
 
   useEffect(() => {
     if (loading || !user) return;
@@ -95,7 +96,7 @@ export default function LoginPage() {
 
   const handleGoogle = async () => {
     if (role === "volunteer" && !inviteCode.trim()) {
-      setError("Enter your invite code before signing in.");
+      setError("Enter your invite code before continuing.");
       return;
     }
     setError("");
@@ -110,6 +111,12 @@ export default function LoginPage() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const switchRole = (newRole: "ngo_admin" | "volunteer") => {
+    setRole(newRole);
+    setError("");
+    setInviteCode("");
   };
 
   if (loading || user) {
@@ -224,7 +231,7 @@ export default function LoginPage() {
         <div style={{ position: "absolute", top: "-20%", right: "-20%", width: "60%", height: "60%", borderRadius: "50%", background: "rgba(42,130,86,0.1)", filter: "blur(80px)", pointerEvents: "none" }} />
         <div style={{ position: "absolute", bottom: "-20%", left: "-10%", width: "50%", height: "50%", borderRadius: "50%", background: "rgba(72,161,94,0.07)", filter: "blur(80px)", pointerEvents: "none" }} />
 
-        {/* Mobile logo (hidden on desktop) */}
+        {/* Mobile logo */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mobile-logo"
           style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 36 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -242,7 +249,7 @@ export default function LoginPage() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           style={{
             width: "100%",
-            maxWidth: 420,
+            maxWidth: 440,
             background: "rgba(255,255,255,0.06)",
             backdropFilter: "blur(24px)",
             border: "1px solid rgba(255,255,255,0.1)",
@@ -254,39 +261,75 @@ export default function LoginPage() {
           }}
         >
           {/* Card header */}
-          <div style={{ marginBottom: 28 }}>
+          <div style={{ marginBottom: 24 }}>
             <h2 style={{ color: "#fff", fontSize: 20, fontWeight: 700, margin: "0 0 6px", letterSpacing: "-0.3px" }}>
-              Welcome back
+              {authMode === "login" ? "Welcome back" : "Get started"}
             </h2>
             <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, margin: 0 }}>
-              Sign in to your{role === "ngo_admin" ? " NGO Admin" : " Volunteer"} account
+              {authMode === "login"
+                ? `Sign in to your ${role === "ngo_admin" ? "NGO Admin" : "Volunteer"} account`
+                : `Create your ${role === "ngo_admin" ? "NGO Admin" : "Volunteer"} account`}
             </p>
           </div>
 
-          {/* Role tabs */}
-          <div style={{ display: "flex", background: "rgba(0,0,0,0.2)", borderRadius: 12, padding: 3, marginBottom: 24, gap: 3 }}>
+          {/* Role switcher */}
+          <div style={{ display: "flex", background: "rgba(0,0,0,0.2)", borderRadius: 12, padding: 3, marginBottom: 20, gap: 3 }}>
             {(["ngo_admin", "volunteer"] as const).map((r) => (
               <motion.button
                 key={r}
-                onClick={() => { setRole(r); setError(""); setInviteCode(""); }}
+                onClick={() => switchRole(r)}
                 whileTap={{ scale: 0.97 }}
                 style={{
                   flex: 1,
-                  padding: "9px 0",
+                  padding: "10px 0",
                   borderRadius: 10,
+                  fontSize: 13,
+                  fontWeight: 700,
                   border: "none",
                   cursor: "pointer",
-                  fontSize: 13,
-                  fontWeight: 600,
                   transition: "all 0.2s",
-                  background: role === r ? "linear-gradient(135deg, #2A8256, #48A15E)" : "transparent",
-                  color: role === r ? "#fff" : "rgba(255,255,255,0.4)",
-                  boxShadow: role === r ? "0 4px 14px rgba(42,130,86,0.4)" : "none",
-                  position: "relative",
+                  letterSpacing: "0.01em",
+                  ...(role === r
+                    ? {
+                        background: r === "ngo_admin"
+                          ? "linear-gradient(135deg, #2A8256, #48A15E)"
+                          : "linear-gradient(135deg, #1a7a5e, #2A8256)",
+                        color: "#fff",
+                        boxShadow: "0 4px 14px rgba(42,130,86,0.4)",
+                      }
+                    : {
+                        background: "transparent",
+                        color: "rgba(255,255,255,0.45)",
+                      }),
                 }}
               >
                 {r === "ngo_admin" ? "NGO Admin" : "Volunteer"}
               </motion.button>
+            ))}
+          </div>
+
+          {/* Login / Signup mode switcher */}
+          <div style={{ display: "flex", background: "rgba(0,0,0,0.15)", borderRadius: 10, padding: 3, marginBottom: 22, gap: 3 }}>
+            {(["login", "signup"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setAuthMode(m); setError(""); }}
+                style={{
+                  flex: 1,
+                  padding: "8px 0",
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  ...(authMode === m
+                    ? { background: "rgba(255,255,255,0.12)", color: "#fff" }
+                    : { background: "transparent", color: "rgba(255,255,255,0.35)" }),
+                }}
+              >
+                {m === "login" ? "Log In" : "Sign Up"}
+              </button>
             ))}
           </div>
 
@@ -296,7 +339,7 @@ export default function LoginPage() {
               <motion.div
                 key="invite"
                 initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
+                animate={{ opacity: 1, height: "auto", marginBottom: 18 }}
                 exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                 style={{ overflow: "hidden" }}
               >
@@ -360,11 +403,11 @@ export default function LoginPage() {
           {/* Divider */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-            <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 11, fontWeight: 500 }}>SIGN IN WITH</span>
+            <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 11, fontWeight: 500 }}>CONTINUE WITH</span>
             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
           </div>
 
-          {/* Google Sign-In button */}
+          {/* Primary: Google button */}
           <motion.button
             onClick={handleGoogle}
             disabled={busy}
@@ -387,6 +430,7 @@ export default function LoginPage() {
               boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
               transition: "background 0.2s",
               letterSpacing: "-0.1px",
+              marginBottom: 10,
             }}
           >
             {busy ? (
@@ -399,16 +443,20 @@ export default function LoginPage() {
             ) : (
               <>
                 <GoogleIcon />
-                Continue with Google
+                {authMode === "login" ? "Log In with Google" : "Sign Up with Google"}
               </>
             )}
           </motion.button>
 
           {/* Footer note */}
-          <p style={{ color: "rgba(255,255,255,0.22)", fontSize: 11.5, textAlign: "center", marginTop: 20, lineHeight: 1.6, margin: "20px 0 0" }}>
+          <p style={{ color: "rgba(255,255,255,0.22)", fontSize: 11.5, textAlign: "center", marginTop: 16, lineHeight: 1.6 }}>
             {role === "volunteer"
-              ? "Your NGO admin provides the invite code when onboarding volunteers."
-              : "First time? You'll set up your NGO profile right after sign-in."}
+              ? authMode === "signup"
+                ? "New volunteer accounts require an invite code from your NGO admin."
+                : "Enter your invite code above, then sign in with Google."
+              : authMode === "signup"
+                ? "First time? You'll set up your NGO profile right after sign-in."
+                : "Welcome back. Sign in to access your NGO dashboard."}
           </p>
         </motion.div>
 

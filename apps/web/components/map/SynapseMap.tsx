@@ -33,6 +33,12 @@ export default function SynapseMap({ needs, volunteers, hotspots, showVolunteers
         const newMap = new Map(mapRef.current, {
           center: { lat: 28.6139, lng: 77.2090 }, // Delhi
           zoom: 12,
+          minZoom: 4,
+          maxZoom: 18,
+          restriction: {
+            latLngBounds: { north: 37.6, south: 6.4, west: 68.1, east: 97.4 },
+            strictBounds: false,
+          },
           mapId: "SAATHI_MAP",
           styles: [
             { elementType: "geometry", stylers: [{ color: "#f5f6f1" }] },

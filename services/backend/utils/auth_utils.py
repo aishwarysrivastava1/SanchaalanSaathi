@@ -2,10 +2,18 @@ from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 import os
+import warnings
 
-SECRET_KEY  = os.getenv("JWT_SECRET_KEY", "synapse-dev-secret-change-in-prod-32chars!")
+_DEV_SECRET = "synapse-dev-secret-change-in-prod-32chars!"
+SECRET_KEY  = os.getenv("JWT_SECRET_KEY", _DEV_SECRET)
 ALGORITHM   = "HS256"
 EXPIRE_MINS = 60 * 24  # 24 hours
+
+if SECRET_KEY == _DEV_SECRET:
+    warnings.warn(
+        "JWT_SECRET_KEY is using the insecure default — set a strong secret in production!",
+        stacklevel=2,
+    )
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

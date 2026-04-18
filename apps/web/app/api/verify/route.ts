@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ status: newStatus, verification });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Verification error:", process.env.NODE_ENV === "development" ? error : "Masked");
     return NextResponse.json(
       { error: "Verification failed" },

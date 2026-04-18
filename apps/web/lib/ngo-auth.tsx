@@ -25,7 +25,11 @@ type NGOAuthCtx = {
 
 const Ctx = createContext<NGOAuthCtx>({} as NGOAuthCtx);
 
-const API = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? (
+  process.env.NODE_ENV === 'production'
+    ? (() => { throw new Error('NEXT_PUBLIC_BACKEND_URL is not set'); })()
+    : 'http://localhost:8000'
+);
 
 function parseToken(token: string): (Omit<NGOUser, "email"> & { email: string }) | null {
   try {
@@ -78,7 +82,7 @@ export function NGOAuthProvider({ children }: { children: React.ReactNode }) {
     }
     const data = await res.json();
     localStorage.setItem("ngo_token", data.token);
-    document.cookie = `ngo_token=${data.token}; path=/; max-age=${60 * 60 * 24}`;
+    document.cookie = `ngo_token=${data.token}; path=/; max-age=${60 * 60 * 24}; SameSite=Strict${location.protocol === 'https:' ? '; Secure' : ''}`;
     const parsed = parseToken(data.token) as NGOUser;
     setUser(parsed);
     return parsed;
@@ -97,7 +101,7 @@ export function NGOAuthProvider({ children }: { children: React.ReactNode }) {
       invite_code: inviteCode,
     });
     localStorage.setItem("ngo_token", data.token);
-    document.cookie = `ngo_token=${data.token}; path=/; max-age=${60 * 60 * 24}`;
+    document.cookie = `ngo_token=${data.token}; path=/; max-age=${60 * 60 * 24}; SameSite=Strict${location.protocol === 'https:' ? '; Secure' : ''}`;
     const parsed = parseToken(data.token) as NGOUser;
     setUser(parsed);
     return parsed;

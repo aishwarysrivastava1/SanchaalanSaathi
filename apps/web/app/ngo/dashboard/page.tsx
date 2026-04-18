@@ -195,7 +195,7 @@ export default function NGODashboardPage() {
 
       {/* Recent tasks */}
       <div>
-        <h2 className="text-sm font-semibold text-white/80 mb-3">Recent Tasks</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Recent Tasks</h2>
         {(!data?.recent_tasks || data.recent_tasks.length === 0) ? (
           <motion.div
             whileHover={{ y: -2, borderColor: "#95C78F" }}

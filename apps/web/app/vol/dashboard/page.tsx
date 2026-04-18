@@ -190,7 +190,7 @@ export default function VolDashboardPage() {
 
       {/* Assignments */}
       <div>
-        <h2 className="text-sm font-semibold text-white/80 mb-3">My Assignments</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">My Assignments</h2>
         {(!data?.assignments || data.assignments.length === 0) ? (
           <motion.div
             whileHover={{ y: -2, borderColor: "#95C78F" }}

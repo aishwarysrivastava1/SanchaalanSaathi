@@ -1,7 +1,11 @@
 import * as admin from 'firebase-admin';
 import { validateProductionEnv } from './env';
 
-const shouldEnforce = process.env.VERCEL === '1' || process.env.ENFORCE_ENV_VALIDATION === '1';
+// NEXT_PHASE is 'phase-production-build' during `next build`. Secrets are not
+// injected at build time on Vercel (only at runtime), so skip all validation
+// and SDK init during build to prevent false-positive crashes.
+const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+const shouldEnforce = !isBuildPhase && (process.env.VERCEL === '1' || process.env.ENFORCE_ENV_VALIDATION === '1');
 
 function parseServiceAccount(raw: string | undefined) {
   if (!raw) return null;

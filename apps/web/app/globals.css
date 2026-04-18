@@ -43,7 +43,21 @@ body {
   color: var(--text-primary);
   background: var(--bg-base);
   min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
 }
+
+/* ── Global font-size scale-up ─────────────────────────── */
+.text-\[10px\]  { font-size: 0.75rem   !important; }  /* 12px (was 10px) */
+.text-\[11px\]  { font-size: 0.8125rem !important; }  /* 13px (was 11px) */
+.text-\[12px\]  { font-size: 0.875rem  !important; }  /* 14px (was 12px) */
+.text-xs        { font-size: 0.875rem  !important; }  /* 14px (was 12px) */
+.text-sm        { font-size: 1rem      !important; }  /* 16px (was 14px) */
+.text-base      { font-size: 1.125rem  !important; }  /* 18px (was 16px) */
+.text-lg        { font-size: 1.25rem   !important; }  /* 20px (was 18px) */
+.text-xl        { font-size: 1.5rem    !important; }  /* 24px (was 20px) */
+.text-2xl       { font-size: 1.75rem   !important; }  /* 28px (was 24px) */
+.text-3xl       { font-size: 2.125rem  !important; }  /* 34px (was 30px) */
 
 /* ── Dark mode cascade overrides ───────────────────── */
 /* These let existing components pick up dark mode without touching each file */

@@ -42,6 +42,8 @@ app.add_middleware(
         "http://localhost:3001",
         _FRONTEND_URL,
     ],
+    # Covers Vercel preview deployments and Railway apps without wildcarding all origins
+    allow_origin_regex=r"https://[a-z0-9\-]+(\.vercel\.app|\.railway\.app)",
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,

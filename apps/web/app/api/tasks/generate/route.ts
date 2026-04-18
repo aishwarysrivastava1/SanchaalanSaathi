@@ -3,7 +3,11 @@ import { adminDb } from '@/lib/firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? (
+  process.env.NODE_ENV === 'production'
+    ? (() => { throw new Error('NEXT_PUBLIC_BACKEND_URL is not set'); })()
+    : 'http://localhost:8000'
+);
 
 const PROMPT = `Given these community needs, generate 1-2 specific volunteer micro-tasks per need.
 Each task must be completable in 1-4 hours by one person.
@@ -95,8 +99,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, tasks: generatedTasks });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const msg = process.env.NODE_ENV === 'production'
+      ? 'Internal server error'
+      : (error instanceof Error ? error.message : String(error));
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

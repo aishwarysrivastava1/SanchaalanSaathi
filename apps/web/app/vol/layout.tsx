@@ -3,9 +3,10 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, User, Bell, BarChart2, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { LayoutDashboard, User, Bell, BarChart2, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { motion } from "motion/react";
 import { NGOAuthProvider, useNGOAuth } from "../../lib/ngo-auth";
+import { ThemeToggle } from "../../components/ui/ThemeToggle";
 
 const NAV_ITEMS = [
   { href: "/vol/dashboard",     icon: LayoutDashboard, label: "Dashboard",     sub: "Tasks & overview"      },
@@ -14,11 +15,10 @@ const NAV_ITEMS = [
   { href: "/vol/analytics",     icon: BarChart2,       label: "Insights",      sub: "Performance & AI"      },
 ];
 
-function VolSidebar() {
+function VolSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
   const pathname = usePathname();
   const router   = useRouter();
   const { user, logout } = useNGOAuth();
-  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -105,14 +105,6 @@ function VolSidebar() {
           <LogOut size={13} />
           {!collapsed && <span>Sign out</span>}
         </button>
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          className={`flex items-center gap-2 text-white/35 hover:text-white/65 transition-all active:scale-90 rounded-lg text-xs py-1.5 w-full ${
-            collapsed ? "w-10 h-10 justify-center rounded-xl" : "px-3"
-          }`}
-        >
-          {collapsed ? <ChevronRight size={13} /> : <><ChevronLeft size={13} /><span>Collapse</span></>}
-        </button>
       </div>
     </aside>
   );
@@ -120,24 +112,38 @@ function VolSidebar() {
 
 function VolLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname   = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
   const activeItem = NAV_ITEMS.find(
     (i) => pathname === i.href || pathname?.startsWith(i.href + "/")
   );
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#0B3D36" }}>
-      <VolSidebar />
+      <VolSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Desktop header */}
-        <header className="hidden md:flex items-center h-12 px-5 shrink-0" style={{ background: "#115E54" }}>
+        <header className="hidden md:flex items-center h-13 px-4 shrink-0 gap-3" style={{ background: "#115E54" }}>
+          <motion.button
+            onClick={() => setCollapsed((c) => !c)}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.93 }}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+          >
+            {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+          </motion.button>
+          <div className="w-px h-5 bg-white/15 shrink-0" />
           <p className="text-sm font-bold text-white">{activeItem?.label ?? "Volunteer Portal"}</p>
           {activeItem?.sub && (
-            <p className="ml-2.5 text-[11px] text-white/45">{activeItem.sub}</p>
+            <p className="ml-1 text-[11px] text-white/45">{activeItem.sub}</p>
           )}
-          <div className="ml-auto flex items-center gap-1.5 text-[10px] text-white/40">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#48A15E] animate-pulse" />
-            Live
+          <div className="ml-auto flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-[10px] text-white/40">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#48A15E] animate-pulse" />
+              Live
+            </div>
+            <ThemeToggle size="sm" />
           </div>
         </header>
 
