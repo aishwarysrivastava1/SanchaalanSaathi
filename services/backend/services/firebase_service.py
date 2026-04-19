@@ -43,11 +43,7 @@ def _try_parse(candidate: str) -> dict | None:
     if _yaml is not None:
         try:
             result = _yaml.safe_load(candidate)
-            if isinstance(result, dict) and "private_key" in result:
-                # YAML parses \n as literal backslash-n in unquoted scalars; fix private_key
-                pk = result.get("private_key", "")
-                if isinstance(pk, str) and "\\n" in pk:
-                    result["private_key"] = pk.replace("\\n", "\n")
+            if isinstance(result, dict) and "type" in result:
                 return result
         except Exception:
             pass
@@ -105,6 +101,11 @@ def _parse_service_account_json(raw: str) -> dict | None:
         result = _try_parse(candidate)
         if result is not None:
             logger.info(f"FIREBASE_SERVICE_ACCOUNT_JSON parsed via candidate[{i}]")
+            # Always normalize private_key: replace literal \n (two chars) with real newline.
+            # Required regardless of parse method — YAML, JSON with escaped chars, etc.
+            pk = result.get("private_key", "")
+            if isinstance(pk, str) and "\\n" in pk:
+                result["private_key"] = pk.replace("\\n", "\n")
             return result
 
     # Diagnostic: log first 120 chars and length to help diagnose format issues
