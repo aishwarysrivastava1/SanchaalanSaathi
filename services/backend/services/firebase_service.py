@@ -1,3 +1,4 @@
+import ast
 import firebase_admin
 from firebase_admin import credentials, firestore
 import os
@@ -24,6 +25,16 @@ def _try_parse(candidate: str) -> dict | None:
                 return result
         except (json.JSONDecodeError, ValueError):
             pass
+
+    # Fallback: Python dict literal format (keys/values without quotes).
+    # Happens when service account is copy-pasted via str(dict) instead of json.dumps().
+    try:
+        result = ast.literal_eval(candidate)
+        if isinstance(result, dict):
+            return result
+    except Exception:
+        pass
+
     return None
 
 
