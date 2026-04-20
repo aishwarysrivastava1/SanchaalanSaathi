@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 
 from db.base import get_db
 from db.models import User, NGO, VolunteerProfile
@@ -73,6 +74,7 @@ async def signup(req: SignupReq, db: AsyncSession = Depends(get_db)):
             availability={"mon": True, "tue": True, "wed": True, "thu": True, "fri": True, "sat": False, "sun": False},
         )
         db.add(profile)
+        await db.commit()
         token = create_token(user.id, "volunteer", ngo.id, req.email)
         return {"token": token, "role": "volunteer", "ngo_id": ngo.id, "ngo_name": ngo.name}
 
@@ -80,6 +82,7 @@ async def signup(req: SignupReq, db: AsyncSession = Depends(get_db)):
     user = User(email=req.email, password_hash=hash_password(req.password), role="ngo_admin", ngo_id=None)
     db.add(user)
     await db.flush()
+    await db.commit()
     token = create_token(user.id, "ngo_admin", None, req.email)
     return {"token": token, "role": "ngo_admin", "ngo_id": None, "needs_ngo_setup": True}
 
@@ -105,6 +108,7 @@ async def create_ngo(
     await db.flush()
 
     await db.execute(update(User).where(User.id == user.user_id).values(ngo_id=ngo.id))
+    await db.commit()
     token = create_token(user.user_id, "ngo_admin", ngo.id, user.email)
 
     return {"token": token, "ngo_id": ngo.id, "invite_code": code, "name": ngo.name}
@@ -158,26 +162,54 @@ async def _google_auth_inner(req: GoogleAuthReq, db: AsyncSession):
         if not ngo:
             raise HTTPException(status_code=404, detail="Invalid invite code")
 
-        user = User(email=req.email, password_hash=None, role="volunteer", ngo_id=ngo.id)
-        db.add(user)
-        await db.flush()
+        try:
+            user = User(email=req.email, password_hash=None, role="volunteer", ngo_id=ngo.id)
+            db.add(user)
+            await db.flush()
 
-        profile = VolunteerProfile(
-            user_id=user.id,
-            ngo_id=ngo.id,
-            skills=[],
-            availability={"mon": True, "tue": True, "wed": True, "thu": True, "fri": True, "sat": False, "sun": False},
-        )
-        db.add(profile)
-        token = create_token(user.id, "volunteer", ngo.id, req.email)
-        return {"token": token, "role": "volunteer", "ngo_id": ngo.id, "ngo_name": ngo.name}
+            profile = VolunteerProfile(
+                user_id=user.id,
+                ngo_id=ngo.id,
+                skills=[],
+                availability={"mon": True, "tue": True, "wed": True, "thu": True, "fri": True, "sat": False, "sun": False},
+            )
+            db.add(profile)
+            await db.commit()
+            token = create_token(user.id, "volunteer", ngo.id, req.email)
+            return {"token": token, "role": "volunteer", "ngo_id": ngo.id, "ngo_name": ngo.name}
+        except IntegrityError:
+            await db.rollback()
+            existing_user = (await db.execute(select(User).where(User.email == req.email))).scalar_one_or_none()
+            if existing_user:
+                token = create_token(existing_user.id, existing_user.role, existing_user.ngo_id, existing_user.email)
+                return {
+                    "token": token,
+                    "role": existing_user.role,
+                    "ngo_id": existing_user.ngo_id,
+                    "needs_ngo_setup": existing_user.role == "ngo_admin" and not existing_user.ngo_id,
+                }
+            raise
 
     # ngo_admin — NGO created separately via /ngo/create
-    user = User(email=req.email, password_hash=None, role="ngo_admin", ngo_id=None)
-    db.add(user)
-    await db.flush()
-    token = create_token(user.id, "ngo_admin", None, req.email)
-    return {"token": token, "role": "ngo_admin", "ngo_id": None, "needs_ngo_setup": True}
+    try:
+        user = User(email=req.email, password_hash=None, role="ngo_admin", ngo_id=None)
+        db.add(user)
+        await db.flush()
+        await db.commit()
+        token = create_token(user.id, "ngo_admin", None, req.email)
+        return {"token": token, "role": "ngo_admin", "ngo_id": None, "needs_ngo_setup": True}
+    except IntegrityError:
+        await db.rollback()
+        existing_user = (await db.execute(select(User).where(User.email == req.email))).scalar_one_or_none()
+        if existing_user:
+            token = create_token(existing_user.id, existing_user.role, existing_user.ngo_id, existing_user.email)
+            return {
+                "token": token,
+                "role": existing_user.role,
+                "ngo_id": existing_user.ngo_id,
+                "needs_ngo_setup": existing_user.role == "ngo_admin" and not existing_user.ngo_id,
+            }
+        raise
 
 
 @router.post("/logout")

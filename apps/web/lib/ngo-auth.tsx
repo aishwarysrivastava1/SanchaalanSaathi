@@ -1,8 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { api } from "./ngo-api";
+import { api, googleAuthWithRetry } from "./ngo-api";
 import { signInWithGoogle as firebaseSignInWithGoogle } from "./firebase-auth";
+import { authErrorMessage, isDismissedPopupError } from "./auth-errors";
 
 export type NGOUser = {
   user_id: string;
@@ -89,19 +90,16 @@ export function NGOAuthProvider({ children }: { children: React.ReactNode }) {
     try {
       firebaseUser = await firebaseSignInWithGoogle();
     } catch (err: unknown) {
-      const code = (err as { code?: string })?.code ?? "";
-      if (code === "auth/popup-closed-by-user") throw new Error("Google sign-in window was closed. Please try again.");
-      if (code === "auth/cancelled-popup-request") throw new Error("Another sign-in is in progress. Please wait and try again.");
-      if (code === "auth/popup-in-flight") throw new Error("Sign-in already in progress — please wait.");
-      if (code === "auth/popup-blocked") throw new Error("Popup blocked — allow popups for this site and try again.");
-      if (code === "auth/unauthorized-domain") throw new Error("This domain is not authorised in Firebase. Add it to Firebase Console → Authentication → Settings → Authorised domains.");
-      throw new Error((err as Error)?.message ?? "Google sign-in failed.");
+      if (isDismissedPopupError(err)) {
+        throw new Error("Google sign-in window was closed. Please try again.");
+      }
+      throw new Error(authErrorMessage(err));
     }
 
     // Step 2: Exchange Firebase identity with backend for a custom JWT
     let data;
     try {
-      data = await api.googleAuth({
+      data = await googleAuthWithRetry({
         email: firebaseUser.email!,
         firebase_uid: firebaseUser.uid,
         role,

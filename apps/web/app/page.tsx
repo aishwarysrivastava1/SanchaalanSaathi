@@ -9,7 +9,8 @@ import {
   ChevronRight, Star, TrendingUp, Clock,
 } from "lucide-react";
 import { signInWithGoogle as firebaseSignIn } from "@/lib/firebase-auth";
-import { api, friendlyError } from "@/lib/ngo-api";
+import { api, friendlyError, googleAuthWithRetry } from "@/lib/ngo-api";
+import { authErrorCode, authErrorMessage, isDismissedPopupError } from "@/lib/auth-errors";
 
 // ── Shared sign-in logic ──────────────────────────────────────────────────────
 
@@ -29,25 +30,19 @@ async function exchangeAndRedirect(
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60_000);
+  const timeoutId = setTimeout(() => controller.abort(), 30_000);
   try {
-    const res = await fetch(`${BACKEND}/api/auth/google`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const data = await googleAuthWithRetry(
+      {
         email: firebaseUser.email,
         firebase_uid: firebaseUser.uid,
         role,
         invite_code: role === "volunteer" ? inviteCode.trim() || undefined : undefined,
-      }),
-      signal: controller.signal,
-    });
+      },
+      { attempts: 3, timeoutMs: 30000 },
+    );
     clearTimeout(timeoutId);
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.detail || `Server error ${res.status}`);
-    }
-    const data: { token: string; role: string; ngo_id: string | null; needs_ngo_setup?: boolean } = await res.json();
+
     localStorage.setItem("ngo_token", data.token);
     document.cookie = `ngo_token=${data.token}; path=/; max-age=${60 * 60 * 24}; SameSite=Strict${location.protocol === "https:" ? "; Secure" : ""}`;
     if (data.needs_ngo_setup) router.replace("/ngo/setup");
@@ -74,21 +69,19 @@ async function handleGoogleSignIn(
   try {
     firebaseUser = await firebaseSignIn();
   } catch (e: unknown) {
-    const code = (e as { code?: string })?.code ?? "";
-    if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+    const code = authErrorCode(e);
+    if (isDismissedPopupError(e)) {
       // User dismissed the popup — not an error, just reset.
+    } else if (code === "auth/redirect-started") {
+      setError("Redirecting to Google sign-in...");
     } else if (code === "auth/popup-blocked") {
-      setError("Pop-up was blocked by your browser. Allow pop-ups for this site and try again.");
-    } else if (code === "auth/popup-in-flight") {
-      setError("Sign-in already in progress — please wait.");
-    } else if (code === "auth/unauthorized-domain") {
-      setError("This domain is not authorised in Firebase. Contact support.");
-    } else if (code === "auth/network-request-failed") {
-      setError("Network error — check your connection and try again.");
+      setError(authErrorMessage(e));
     } else {
-      setError(friendlyError(e));
+      setError(authErrorMessage(e) || friendlyError(e));
     }
-    setBusy(false);
+    if (code !== "auth/redirect-started") {
+      setBusy(false);
+    }
     return;
   }
 
@@ -214,7 +207,7 @@ function LoginCard({
               if (lookupTimerRef.current) clearTimeout(lookupTimerRef.current);
               if (val.length >= 6) {
                 lookupTimerRef.current = setTimeout(() => {
-                  api.lookupNGO(val).then((d) => setNgoName(d.ngo_name)).catch(() => setNgoName(""));
+                  api.lookupNGO(val).then((d: { ngo_name: string }) => setNgoName(d.ngo_name)).catch(() => setNgoName(""));
                 }, 300);
               }
             }}

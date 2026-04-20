@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "./firebase";
 import {
   onAuthStateChanged, User, GoogleAuthProvider,
-  signInWithPopup, signOut as fbSignOut,
+  signInWithPopup, signInWithRedirect, signOut as fbSignOut,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
@@ -36,6 +36,15 @@ function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
       setTimeout(() => reject(new Error(`Firestore timeout after ${ms}ms`)), ms)
     ),
   ]);
+}
+
+let popupInFlight = false;
+let lastPopupAttempt = 0;
+
+function shouldUseRedirectFlow(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return /iPhone|iPad|iPod|Android|Mobile|FBAN|FB_IAB|Instagram|Line\//i.test(ua);
 }
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -96,7 +105,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signInWithGoogle = async () => {
     if (!auth) throw new Error("Firebase auth is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars.");
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+
+    if (shouldUseRedirectFlow()) {
+      await signInWithRedirect(auth, provider);
+      throw Object.assign(new Error("Redirect sign-in started."), { code: "auth/redirect-started" });
+    }
+
+    const now = Date.now();
+    if (popupInFlight || now - lastPopupAttempt < 900) {
+      throw Object.assign(new Error("Sign-in already in progress. Please wait."), { code: "auth/popup-in-flight" });
+    }
+
+    popupInFlight = true;
+    lastPopupAttempt = now;
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code ?? "";
+      if (code === "auth/popup-blocked") {
+        await signInWithRedirect(auth, provider);
+        throw Object.assign(new Error("Redirect sign-in started."), { code: "auth/redirect-started" });
+      }
+      throw err;
+    } finally {
+      popupInFlight = false;
+    }
   };
 
   const signOut = async () => {

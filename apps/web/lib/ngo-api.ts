@@ -1,5 +1,11 @@
 const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
+type GoogleAuthBody = { email: string; firebase_uid: string; role: string; invite_code?: string };
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /** Map any thrown value to a user-friendly message — never show raw backend detail. */
 export function friendlyError(e: unknown): string {
   const msg = (e instanceof Error ? e.message : String(e)) || "";
@@ -236,6 +242,58 @@ export const api = {
       `/api/ngo/events/${eventId}/attendance/${volId}`, token, { status }
     ),
 };
+
+export async function googleAuthWithRetry(
+  body: GoogleAuthBody,
+  opts: { attempts?: number; timeoutMs?: number } = {},
+): Promise<{ token: string; role: string; ngo_id: string | null; needs_ngo_setup?: boolean }> {
+  const attempts = Math.max(1, opts.attempts ?? 3);
+  const timeoutMs = Math.max(5000, opts.timeoutMs ?? 30000);
+  const backoffMs = [800, 1600, 3200];
+
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const res = await fetch(`${BASE}/api/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        return res.json();
+      }
+
+      if (res.status >= 500 || res.status === 429) {
+        const err = await res.json().catch(() => ({}));
+        lastError = new Error(err.detail || `Request failed: ${res.status}`);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Request failed: ${res.status}`);
+      }
+    } catch (e: unknown) {
+      clearTimeout(timeoutId);
+      const aborted = (e as { name?: string })?.name === "AbortError";
+      const msg = (e as Error)?.message ?? "";
+      const transient = aborted || msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("fetch");
+      if (!transient) {
+        throw e;
+      }
+      lastError = aborted ? new Error(`Request timeout after ${timeoutMs}ms`) : e;
+    }
+
+    if (attempt < attempts) {
+      await sleep(backoffMs[Math.min(attempt - 1, backoffMs.length - 1)]);
+    }
+  }
+
+  throw lastError ?? new Error("Authentication request failed");
+}
 
 export type RecommendedTask = {
   task_id: string;

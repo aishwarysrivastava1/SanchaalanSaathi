@@ -6,6 +6,7 @@ import { useAuth } from "../../../lib/auth";
 import { ThemeToggle } from "../../../components/ui/ThemeToggle";
 import { Building2, ArrowLeft, Map, BarChart3, Users, Shield, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { authErrorCode, authErrorMessage, isDismissedPopupError } from "@/lib/auth-errors";
 
 const FEATURES = [
   { icon: Map,       text: "Intelligence map with live need visualisation" },
@@ -42,6 +43,7 @@ export default function NGOLoginPage() {
           console.error("setUserRole failed:", err);
           roleAssigned.current = false;
           setRedirecting(false);
+          setSigningIn(false);
           setSetupError("Account setup failed. Please try signing in again.");
           signOut();
         });
@@ -55,15 +57,19 @@ export default function NGOLoginPage() {
       await signInWithGoogle();
       // onAuthStateChanged will fire and useEffect will redirect
     } catch (err: any) {
-      const code = err?.code ?? "";
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+      const code = authErrorCode(err);
+      if (isDismissedPopupError(err)) {
         // User dismissed — not an error
+      } else if (code === "auth/redirect-started") {
+        setSetupError("Redirecting to Google sign-in...");
       } else if (code === "auth/popup-blocked") {
-        setSetupError("Popup was blocked by your browser. Please allow popups for this site and try again.");
+        setSetupError(authErrorMessage(err));
       } else {
-        setSetupError(err?.message ?? "Sign-in failed. Please try again.");
+        setSetupError(authErrorMessage(err));
       }
-      setSigningIn(false);
+      if (code !== "auth/redirect-started") {
+        setSigningIn(false);
+      }
     }
   };
 
