@@ -10,6 +10,7 @@ import AnalyticsPanel from "./AnalyticsPanel";
 import NotificationBell from "./NotificationBell";
 import TaskKanban from "./TaskKanban";
 import VolunteerRegistration from "./VolunteerRegistration";
+import { Skeleton, SkeletonCircle, SkeletonText } from "../ui/Skeleton";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { Map as MapIcon, LayoutDashboard, Users, LogOut, Activity, Zap, AlertTriangle, CheckCircle2, UserPlus } from "lucide-react";
 import { fetchVolunteers, fetchHotspots } from "../../lib/api";
@@ -86,8 +87,19 @@ export default function NGODashboard() {
     router.replace("/");
   };
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const cards = document.querySelectorAll('.glass-card');
+    cards.forEach((card) => {
+      const rect = (card as HTMLElement).getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      (card as HTMLElement).style.setProperty('--mouse-x', `${x}px`);
+      (card as HTMLElement).style.setProperty('--mouse-y', `${y}px`);
+    });
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-[#F5F6F1] dark:bg-gray-950">
+    <div className="flex flex-col h-screen bg-[#F8FAFB] dark:bg-[#072921]" onMouseMove={handleMouseMove}>
 
       {/* ── Top Nav ───────────────────────────────────────────────────────────── */}
       <header className="h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center px-5 gap-3 shrink-0 z-20 shadow-sm">
@@ -99,9 +111,9 @@ export default function NGODashboard() {
         </div>
 
         {/* Real-time indicator */}
-        <div className="hidden sm:flex items-center gap-1.5 ml-3 bg-[#48A15E]/10 dark:bg-[#48A15E]/20 border border-[#48A15E]/25 text-[#2A8256] dark:text-[#48A15E] text-[10px] font-semibold px-2.5 py-1 rounded-full">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#48A15E] animate-pulse" />
-          Live
+        <div className="hidden sm:flex items-center gap-1.5 ml-3 bg-[#48A15E]/10 dark:bg-[#48A15E]/20 border border-[#48A15E]/25 text-[#2A8256] dark:text-[#48A15E] text-[10px] font-bold px-2.5 py-1 rounded-full animate-glow-pulse shadow-[0_0_12px_rgba(72,161,94,0.15)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#48A15E] shadow-[0_0_8px_rgba(72,161,94,0.6)]" />
+          LIVE COMMAND
         </div>
 
         <div className="ml-auto flex items-center gap-2">
@@ -164,7 +176,24 @@ export default function NGODashboard() {
             <FileUpload onUploadSuccess={loadSpatialData} />
             <AnalyticsPanel needs={needs} vols={vols} />
             <VolunteerRegistration onSuccess={loadSpatialData} />
-            <NeedList needs={needs} onNeedClick={(need) => setSelectedNeed(need)} />
+            {needsLoading ? (
+              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 space-y-3">
+                <Skeleton width="40%" height="1.2rem" />
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex gap-3">
+                      <SkeletonCircle size={32} />
+                      <div className="flex-1">
+                        <Skeleton width="70%" className="mb-2" />
+                        <Skeleton width="40%" height="0.6rem" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <NeedList needs={needs} onNeedClick={(need) => setSelectedNeed(need)} />
+            )}
 
             {/* ── Real-time Activity Feed ────────────────────────────────────── */}
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
@@ -174,7 +203,19 @@ export default function NGODashboard() {
                 <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#48A15E] animate-pulse" />
               </div>
               <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                {activityEvents.length === 0 ? (
+                {needsLoading ? (
+                  <div className="p-4 space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex gap-3">
+                        <SkeletonCircle size={12} className="mt-1" />
+                        <div className="flex-1">
+                          <Skeleton width="60%" className="mb-1" />
+                          <Skeleton width="90%" height="0.5rem" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : activityEvents.length === 0 ? (
                   <p className="text-xs text-gray-400 dark:text-gray-600 text-center py-5">
                     No activity yet
                   </p>

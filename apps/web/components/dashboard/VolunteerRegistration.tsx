@@ -75,25 +75,25 @@ export default function VolunteerRegistration({ onSuccess }: { onSuccess?: () =>
       {!isOpen ? (
         <button
           onClick={handleOpen}
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-500 hover:text-[#115E54] hover:border-[#115E54]/40 hover:bg-[#115E54]/4 transition-all text-sm font-medium shadow-sm"
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-500 hover:text-[#115E54] hover:border-[#115E54]/40 hover:bg-[#115E54]/4 dark:hover:bg-[#115E54]/10 transition-all text-sm font-medium shadow-sm glass-card group"
         >
-          <UserPlus size={15} />
+          <UserPlus size={15} className="group-hover:scale-110 transition-transform" />
           Register Volunteer
         </button>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-800">Register Volunteer</h3>
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-sm w-full glass-card hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Register Volunteer</h3>
             <button
               onClick={() => { setIsOpen(false); setLocationNote(null); setShowManualCoords(false); }}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
             >
               Cancel
             </button>
           </div>
 
           {locationNote && (
-            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200/60 rounded-lg px-3 py-2 mb-4">
+            <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 rounded-lg px-3 py-2 mb-4">
               {locationNote}
             </p>
           )}
@@ -101,7 +101,7 @@ export default function VolunteerRegistration({ onSuccess }: { onSuccess?: () =>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="text-xs font-medium text-gray-600">Full Name</label>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Full Name</label>
                 <span className={`text-[10px] ${formData.name.length > 50 ? "text-red-500" : "text-gray-400"}`}>
                   {formData.name.length}/50
                 </span>
@@ -110,7 +110,7 @@ export default function VolunteerRegistration({ onSuccess }: { onSuccess?: () =>
                 type="text"
                 placeholder="Volunteer name"
                 maxLength={50}
-                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:border-[#115E54]/40 outline-none placeholder-gray-400"
+                className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-100 focus:border-[#115E54]/40 outline-none placeholder-gray-400 transition-all"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
@@ -135,20 +135,20 @@ export default function VolunteerRegistration({ onSuccess }: { onSuccess?: () =>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Location Name</label>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Location Name</label>
                 <div className="relative">
                   <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#115E54]/50" size={12} />
                   <input
                     type="text"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-xs text-gray-800 focus:border-[#115E54]/40 outline-none"
+                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg pl-8 pr-3 py-2 text-xs text-gray-800 dark:text-gray-100 focus:border-[#115E54]/40 outline-none"
                     value={formData.location_name}
                     onChange={(e) => setFormData({ ...formData, location_name: e.target.value })}
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Priority</label>
-                <div className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-400 italic">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Priority</label>
+                <div className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-xs text-gray-400 dark:text-gray-500 italic">
                   ALPHA-7
                 </div>
               </div>

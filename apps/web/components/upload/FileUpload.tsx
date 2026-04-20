@@ -53,12 +53,12 @@ export default function FileUpload({ onUploadSuccess }: { onUploadSuccess: () =>
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm w-full">
-      <div className="flex gap-1 mb-3 bg-gray-100 p-1 rounded-lg w-max">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-sm w-full glass-card hover:shadow-md transition-shadow">
+      <div className="flex gap-1 mb-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-max">
         <button
           onClick={() => setMode("text")}
-          className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-md font-medium transition-colors ${
-            mode === "text" ? "bg-[#115E54] text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+          className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-md font-medium transition-all ${
+            mode === "text" ? "bg-[#115E54] text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
           }`}
         >
           <Type size={12} />
@@ -66,8 +66,8 @@ export default function FileUpload({ onUploadSuccess }: { onUploadSuccess: () =>
         </button>
         <button
           onClick={() => setMode("file")}
-          className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-md font-medium transition-colors ${
-            mode === "file" ? "bg-[#115E54] text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+          className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-md font-medium transition-all ${
+            mode === "file" ? "bg-[#115E54] text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
           }`}
         >
           <UploadCloud size={12} />
@@ -79,8 +79,8 @@ export default function FileUpload({ onUploadSuccess }: { onUploadSuccess: () =>
         <div className="flex flex-col gap-2">
           <div className="relative">
             <textarea
-              className={`w-full bg-gray-50 border rounded-lg p-3 text-sm text-gray-800 outline-none transition-all focus:border-[#115E54]/40 h-24 resize-none placeholder-gray-400 ${
-                text.length > MAX_REPORT_LENGTH ? "border-red-400 focus:border-red-400" : "border-gray-200"
+              className={`w-full bg-gray-50 dark:bg-gray-800/50 border rounded-lg p-3 text-sm text-gray-800 dark:text-gray-200 outline-none transition-all focus:border-[#115E54]/40 h-24 resize-none placeholder-gray-400 dark:placeholder-gray-600 ${
+                text.length > MAX_REPORT_LENGTH ? "border-red-400 focus:border-red-400" : "border-gray-200 dark:border-gray-800"
               }`}
               placeholder="Describe the emergency, location, and needed resources..."
               value={text}
@@ -109,7 +109,7 @@ export default function FileUpload({ onUploadSuccess }: { onUploadSuccess: () =>
           )}
         </div>
       ) : (
-        <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center hover:border-[#115E54]/40 transition-colors cursor-pointer relative h-28 flex flex-col justify-center items-center">
+        <div className="border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-lg p-4 text-center hover:border-[#115E54]/40 dark:hover:border-[#115E54]/60 transition-all cursor-pointer relative h-28 flex flex-col justify-center items-center hover:bg-gray-50 dark:hover:bg-gray-800/20 group">
           <input
             type="file"
             className="absolute inset-0 opacity-0 cursor-pointer"

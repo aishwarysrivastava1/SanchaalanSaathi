@@ -29,14 +29,14 @@ export default function TaskCard({ task, onClaim }: { task: FirestoreTask; onCla
       : "bg-[#48A15E]";
 
   return (
-    <div className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 border-l-4 ${leftBorder} rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#115E54]/25 dark:hover:border-[#115E54]/40 transition-all duration-200 group cursor-default`}>
+    <div className={`glass-card bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 border-l-4 ${leftBorder} rounded-xl p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-[#115E54]/25 dark:hover:border-[#115E54]/40 transition-all duration-300 group cursor-default`}>
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${urgencyDot}`} />
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-snug truncate">{task.title}</h3>
         </div>
-        <span className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2">
-          <Zap size={8} className="fill-amber-500" />
+        <span className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40 text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ml-2 shadow-[0_2px_10px_rgba(245,158,11,0.1)]">
+          <Zap size={9} className="fill-amber-500 animate-pulse" />
           +{task.xpReward} XP
         </span>
       </div>

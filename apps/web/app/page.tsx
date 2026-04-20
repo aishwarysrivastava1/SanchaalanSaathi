@@ -101,6 +101,19 @@ const GoogleIcon = () => (
 // ── Floating particle ─────────────────────────────────────────────────────────
 
 function Particle({ x, y, size, delay, isDark }: { x: number; y: number; size: number; delay: number; isDark: boolean }) {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({
+        x: (e.clientX - window.innerWidth / 2) / (25 + delay * 5),
+        y: (e.clientY - window.innerHeight / 2) / (25 + delay * 5),
+      });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [delay]);
+
   return (
     <motion.div
       style={{
@@ -109,8 +122,20 @@ function Particle({ x, y, size, delay, isDark }: { x: number; y: number; size: n
         background: isDark ? "rgba(72,161,94,0.12)" : "rgba(17,94,84,0.08)",
         pointerEvents: "none",
       }}
-      animate={{ y: [0, -18, 0], opacity: [0.25, 0.6, 0.25] }}
-      transition={{ duration: 5 + delay, repeat: Infinity, delay, ease: "easeInOut" }}
+      animate={{ 
+        x: mousePos.x,
+        y: [
+          mousePos.y + (Math.sin(Date.now() / 1000) * 10),
+          mousePos.y + (Math.sin(Date.now() / 1000) * 10) - 18,
+          mousePos.y + (Math.sin(Date.now() / 1000) * 10)
+        ],
+        opacity: [0.25, 0.6, 0.25] 
+      }}
+      transition={{ 
+        x: { type: "spring", damping: 30, stiffness: 50 },
+        y: { type: "spring", damping: 30, stiffness: 50 },
+        opacity: { duration: 5 + delay, repeat: Infinity, delay, ease: "easeInOut" }
+      }}
     />
   );
 }
@@ -521,7 +546,7 @@ export default function LandingPage() {
             style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(42,130,86,0.15)", border: "1px solid rgba(72,161,94,0.3)", borderRadius: 100, padding: "6px 16px", marginBottom: 28 }}
           >
             <Star size={13} color="#48A15E" fill="#48A15E" />
-            <span style={{ color: "#95C78F", fontSize: 13, fontWeight: 600 }}>AI-Powered NGO Coordination</span>
+            <span className="text-shimmer" style={{ fontSize: 13, fontWeight: 600 }}>AI-Powered NGO Coordination</span>
           </motion.div>
 
           <motion.h1
