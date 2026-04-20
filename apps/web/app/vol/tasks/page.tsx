@@ -112,7 +112,7 @@ export default function VolTasksPage() {
         <motion.div
           whileHover={{ y: -2, borderColor: "#95C78F" }}
           className="rounded-2xl border border-gray-200 p-10 text-center"
-          style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+          style={{ background: "var(--card-bg)" }}
         >
           <ClipboardList size={28} className="mx-auto mb-3 text-gray-300" />
           <p className="text-sm text-gray-400">No {filter !== "All" ? filter.toLowerCase() : ""} tasks assigned to you yet.</p>
@@ -128,7 +128,7 @@ export default function VolTasksPage() {
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                 whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
                 className="rounded-2xl border border-gray-200 overflow-hidden"
-                style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+                style={{ background: "var(--card-bg)" }}
               >
                 <div className="px-5 py-4 space-y-2">
                   <div className="flex items-start justify-between gap-3">
@@ -199,7 +199,7 @@ export default function VolTasksPage() {
         <motion.div
           whileHover={{ y: -1, borderColor: "#95C78F" }}
           className="rounded-2xl border border-gray-200 overflow-hidden"
-          style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+          style={{ background: "var(--card-bg)" }}
         >
           <button
             onClick={() => setReqsOpen((o) => !o)}

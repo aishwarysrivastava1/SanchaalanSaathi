@@ -90,7 +90,7 @@ export default function NotificationsPage() {
         <motion.div
           whileHover={{ y: -2, borderColor: "#95C78F" }}
           className="rounded-2xl border border-gray-200 p-8 text-center"
-          style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+          style={{ background: "var(--card-bg)" }}
         >
           <Bell size={24} className="text-gray-200 mx-auto mb-2" />
           <p className="text-sm text-gray-400">No notifications yet.</p>
@@ -116,7 +116,7 @@ export default function NotificationsPage() {
                         ? "border-gray-200/60 opacity-60"
                         : "border-gray-200 shadow-sm"
                     }`}
-                    style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+                    style={{ background: "var(--card-bg)" }}
                   >
                     <div
                       className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-gradient-to-br ${meta.gradient}`}

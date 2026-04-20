@@ -103,7 +103,7 @@ export default function VolAnalyticsPage() {
             transition={{ delay: i * 0.07 }}
             whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(42,130,86,0.18)", borderColor: "#95C78F" }}
             className="rounded-2xl border border-gray-200 p-4 flex flex-col gap-2 cursor-default"
-            style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+            style={{ background: "var(--card-bg)" }}
           >
             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `${color}22` }}>
               <Icon size={14} style={{ color }} />
@@ -118,7 +118,7 @@ export default function VolAnalyticsPage() {
       <motion.div
         whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
         className="rounded-2xl border border-gray-200 p-5"
-        style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+        style={{ background: "var(--card-bg)" }}
       >
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm font-semibold text-gray-700">Overall Performance</p>
@@ -142,7 +142,7 @@ export default function VolAnalyticsPage() {
       <motion.div
         whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
         className="rounded-2xl border border-gray-200 p-5"
-        style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+        style={{ background: "var(--card-bg)" }}
       >
         <div className="flex items-center gap-2 mb-4">
           <Trophy size={14} className="text-[#2A8256]" />
@@ -196,7 +196,7 @@ export default function VolAnalyticsPage() {
           <motion.div
             whileHover={{ y: -2, borderColor: "#95C78F" }}
             className="rounded-2xl border border-gray-200 p-6 text-center text-sm text-gray-400"
-            style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+            style={{ background: "var(--card-bg)" }}
           >
             No open tasks match your skills yet. Update your profile skills to get recommendations.
           </motion.div>
@@ -210,7 +210,7 @@ export default function VolAnalyticsPage() {
                 transition={{ delay: i * 0.06 }}
                 whileHover={{ y: -3, boxShadow: "0 12px 28px rgba(42,130,86,0.15)", borderColor: "#95C78F" }}
                 className="rounded-2xl border border-gray-200 p-4"
-                style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)", borderLeft: "4px solid #48A15E" }}
+                style={{ background: "var(--card-bg)", borderLeft: "4px solid #48A15E" }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -252,7 +252,7 @@ export default function VolAnalyticsPage() {
           <motion.div
             whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
             className="rounded-2xl border border-gray-200 overflow-hidden"
-            style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+            style={{ background: "var(--card-bg)" }}
           >
             <table className="w-full text-sm">
               <thead>

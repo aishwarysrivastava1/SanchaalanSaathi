@@ -172,7 +172,7 @@ export default function VolProfilePage() {
       <motion.div
         whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
         className="rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4"
-        style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+        style={{ background: "var(--card-bg)" }}
       >
         <div className="flex items-center gap-2">
           <User size={14} className="text-[#2A8256]" />
@@ -214,7 +214,7 @@ export default function VolProfilePage() {
       <motion.div
         whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
         className="rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4"
-        style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+        style={{ background: "var(--card-bg)" }}
       >
         <h2 className="text-sm font-semibold text-gray-700">Skills</h2>
         <div className="flex flex-wrap gap-2">
@@ -240,7 +240,7 @@ export default function VolProfilePage() {
       <motion.div
         whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
         className="rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4"
-        style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+        style={{ background: "var(--card-bg)" }}
       >
         <h2 className="text-sm font-semibold text-gray-700">Weekly Availability</h2>
         <div className="grid grid-cols-7 gap-1.5">
@@ -266,7 +266,7 @@ export default function VolProfilePage() {
         <motion.div
           whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
           className="rounded-2xl border border-gray-200 shadow-sm p-5"
-          style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+          style={{ background: "var(--card-bg)" }}
         >
           <h2 className="text-sm font-semibold text-gray-700 mb-4">Performance</h2>
           <div className="grid grid-cols-3 gap-3">
@@ -298,7 +298,7 @@ export default function VolProfilePage() {
       <motion.div
         whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
         className="rounded-2xl border border-gray-200 shadow-sm p-5"
-        style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+        style={{ background: "var(--card-bg)" }}
       >
         <div className="flex items-center gap-2 mb-4">
           <Award size={14} className="text-[#2A8256]" />
@@ -329,7 +329,7 @@ export default function VolProfilePage() {
       <motion.div
         whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
         className="rounded-2xl border border-gray-200 shadow-sm p-5"
-        style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+        style={{ background: "var(--card-bg)" }}
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">

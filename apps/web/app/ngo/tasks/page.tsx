@@ -302,7 +302,7 @@ export default function TasksPage() {
       ) : filtered.length === 0 ? (
         <motion.div whileHover={{ y: -2, borderColor: "#95C78F" }}
           className="rounded-2xl border border-gray-200 p-8 text-center text-sm text-gray-400"
-          style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}>
+          style={{ background: "var(--card-bg)" }}>
           No tasks found. Click &quot;New Task&quot; to create one.
         </motion.div>
       ) : (
@@ -314,7 +314,7 @@ export default function TasksPage() {
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                 whileHover={{ y: -2, boxShadow: "0 16px 36px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
                 className="rounded-2xl border border-gray-200 overflow-hidden"
-                style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)", borderLeft: `4px solid ${meta.borderColor}` }}>
+                style={{ background: "var(--card-bg)", borderLeft: `4px solid ${meta.borderColor}` }}>
                 <div className="px-5 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -558,7 +558,7 @@ export default function TasksPage() {
                 {assignModal.ranked.length === 0 ? (
                   <p className="text-center text-sm text-gray-400 py-6">No matching volunteers available.</p>
                 ) : assignModal.ranked.map((r, i) => (
-                  <div key={r.volunteer_id} className="flex items-center gap-3 rounded-xl px-4 py-3 border border-gray-100" style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}>
+                  <div key={r.volunteer_id} className="flex items-center gap-3 rounded-xl px-4 py-3 border border-gray-100" style={{ background: "var(--card-bg)" }}>
                     <div className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}>{i + 1}</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 truncate">{r.name || r.email}</p>

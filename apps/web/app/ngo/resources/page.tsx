@@ -106,7 +106,7 @@ export default function ResourcesPage() {
         <motion.div
           whileHover={{ y: -2, borderColor: "#95C78F" }}
           className="rounded-2xl border border-gray-200 p-8 text-center text-sm text-gray-400"
-          style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+          style={{ background: "var(--card-bg)" }}
         >
           No resources yet. Add inventory to track and allocate.
         </motion.div>
@@ -122,7 +122,7 @@ export default function ResourcesPage() {
                 transition={{ delay: i * 0.06 }}
                 whileHover={{ y: -4, boxShadow: "0 16px 36px rgba(42,130,86,0.15)", borderColor: "#95C78F" }}
                 className="rounded-2xl border border-gray-200 p-5 flex flex-col gap-3"
-                style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+                style={{ background: "var(--card-bg)" }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>

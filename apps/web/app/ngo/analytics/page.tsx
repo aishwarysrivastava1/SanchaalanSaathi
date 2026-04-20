@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
               transition={{ delay: i * 0.07 }}
               whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(42,130,86,0.18)", borderColor: "#95C78F" }}
               className="rounded-2xl border border-gray-200 p-5 flex items-start gap-4"
-              style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+              style={{ background: "var(--card-bg)" }}
             >
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
@@ -106,7 +106,7 @@ export default function AnalyticsPage() {
         <motion.div
           whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
           className="rounded-2xl border border-gray-200 shadow-sm p-5"
-          style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+          style={{ background: "var(--card-bg)" }}
         >
           <h2 className="text-sm font-semibold text-gray-700 mb-4">Skill Coverage</h2>
           <ResponsiveContainer width="100%" height={180}>
@@ -129,7 +129,7 @@ export default function AnalyticsPage() {
                 tickLine={false}
               />
               <Tooltip
-                contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "8px", fontSize: "12px" }}
+                contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--card-border)", borderRadius: "8px", fontSize: "12px", color: "var(--card-text-primary)" }}
                 cursor={{ stroke: "#2A8256", strokeWidth: 1, strokeDasharray: "4 2" }}
               />
               <Area
@@ -170,7 +170,7 @@ export default function AnalyticsPage() {
         <motion.div
           whileHover={{ y: -2, borderColor: "#95C78F" }}
           className="rounded-2xl border border-gray-200 p-8 text-center text-sm text-gray-400"
-          style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+          style={{ background: "var(--card-bg)" }}
         >
           Not enough data yet. Create tasks and assign volunteers to see analytics.
         </motion.div>

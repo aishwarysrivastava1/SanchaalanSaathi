@@ -219,7 +219,7 @@ export default function VolDashboardPage() {
                     whileHover={{ y: -3, boxShadow: "0 16px 36px rgba(42,130,86,0.15)", borderColor: "#95C78F" }}
                     className="rounded-2xl border border-gray-200 overflow-hidden"
                     style={{
-                      background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)",
+                      background: "var(--card-bg)",
                       borderLeft: `4px solid ${meta.borderColor}`,
                     }}
                   >
