@@ -23,6 +23,7 @@
   --bg-base:            #F5F6F1;
   --bg-surface:         #FFFFFF;
   --bg-muted:           #F9FAFB;
+  --modal-bg:           #FFFFFF;
 
   --card-bg:            linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%);
   --card-bg-flat:       #ffffff;
@@ -47,13 +48,14 @@
 
   --bg-base:        #030712;
   --bg-surface:     #111827;
-  --bg-muted:       #1f2937;
+  --bg-muted:       #0d1f1b;
+  --modal-bg:       #111827;
 
   color-scheme: dark;
 
-  --card-bg:            rgba(255,255,255,0.06);
-  --card-bg-flat:       #1f2937;
-  --card-border:        rgba(255,255,255,0.1);
+  --card-bg:            linear-gradient(135deg, #1A352F 0%, #1e3a32 100%);
+  --card-bg-flat:       #1A352F;
+  --card-border:        rgba(255, 255, 255, 0.08);
   --card-text-primary:  #e2e8f0;
   --card-text-muted:    #94a3b8;
 }
@@ -64,6 +66,7 @@ body {
   min-height: 100vh;
   font-size: 15px;
   line-height: 1.6;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* ── Global font-size scale-up ─────────────────────────── */
@@ -91,6 +94,7 @@ body {
 .dark .text-gray-600       { color: #94a3b8; }
 .dark .text-gray-500       { color: #64748b; }
 .dark .text-gray-400       { color: #475569; }
+.dark .text-gray-300       { color: #334155; }
 
 .dark .border-gray-200     { border-color: #1f2937; }
 .dark .border-gray-100     { border-color: #111827; }
@@ -101,8 +105,68 @@ body {
 .dark .shadow-lg           { box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
 
 .dark input,
-.dark textarea             { background-color: #1f2937; color: #f1f5f9; border-color: #374151; }
-.dark input::placeholder   { color: #4b5563; }
+.dark textarea,
+.dark select               { background-color: #1f2937 !important; color: #e2e8f0 !important; border-color: #374151 !important; }
+.dark input::placeholder,
+.dark textarea::placeholder { color: #4b5563 !important; }
+
+/* ── Status & semantic color cascade overrides ─────────────── */
+
+/* Teal — open / accepted status */
+.dark .bg-teal-50          { background-color: rgba(17, 94, 84, 0.18); }
+.dark .text-teal-700       { color: #5eead4; }
+.dark .border-teal-100     { border-color: rgba(20, 184, 166, 0.2); }
+.dark .border-teal-200     { border-color: rgba(20, 184, 166, 0.3); }
+
+/* Amber — in-progress / pending / warning */
+.dark .bg-amber-50         { background-color: rgba(217, 119, 6, 0.12); }
+.dark .bg-amber-100        { background-color: rgba(217, 119, 6, 0.18); }
+.dark .text-amber-600      { color: #fbbf24; }
+.dark .text-amber-700      { color: #fcd34d; }
+.dark .text-amber-800      { color: #fde68a; }
+.dark .border-amber-200    { border-color: rgba(245, 158, 11, 0.3); }
+.dark .border-amber-300    { border-color: rgba(245, 158, 11, 0.4); }
+
+/* Emerald — completed / success */
+.dark .bg-emerald-50       { background-color: rgba(52, 211, 153, 0.12); }
+.dark .text-emerald-600    { color: #6ee7b7; }
+.dark .text-emerald-700    { color: #6ee7b7; }
+.dark .border-emerald-200  { border-color: rgba(52, 211, 153, 0.25); }
+
+/* Red — high-priority / rejected / error */
+.dark .bg-red-50           { background-color: rgba(239, 68, 68, 0.1); }
+.dark .text-red-500        { color: #fca5a5; }
+.dark .text-red-600        { color: #fca5a5; }
+.dark .text-red-700        { color: #fca5a5; }
+.dark .border-red-100      { border-color: rgba(239, 68, 68, 0.15); }
+.dark .border-red-200      { border-color: rgba(239, 68, 68, 0.25); }
+
+/* Blue — accepted / info types */
+.dark .bg-blue-50          { background-color: rgba(59, 130, 246, 0.1); }
+.dark .text-blue-700       { color: #93c5fd; }
+.dark .border-blue-200     { border-color: rgba(96, 165, 250, 0.25); }
+
+/* Purple — campaign type */
+.dark .bg-purple-50        { background-color: rgba(139, 92, 246, 0.1); }
+.dark .text-purple-700     { color: #c4b5fd; }
+.dark .border-purple-200   { border-color: rgba(139, 92, 246, 0.25); }
+
+/* Slate — completed events */
+.dark .bg-slate-50         { background-color: rgba(100, 116, 139, 0.1); }
+.dark .text-slate-500      { color: #94a3b8; }
+.dark .border-slate-200    { border-color: rgba(100, 116, 139, 0.25); }
+
+/* Tailwind gradient variable overrides for badge/achievement components */
+.dark .from-emerald-50     { --tw-gradient-from: rgba(52, 211, 153, 0.1); }
+.dark .to-white            { --tw-gradient-to: #1A352F; }
+
+/* Hover state overrides */
+.dark .hover\:bg-red-50:hover   { background-color: rgba(239, 68, 68, 0.12); }
+.dark .hover\:bg-red-100:hover  { background-color: rgba(239, 68, 68, 0.18); }
+.dark .hover\:bg-gray-100:hover { background-color: #1f2937; }
+.dark .hover\:text-red-400:hover  { color: #fca5a5; }
+.dark .hover\:text-red-700:hover  { color: #fca5a5; }
+.dark .hover\:text-gray-600:hover { color: #94a3b8; }
 
 /* ── Scrollbar ─────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 5px; height: 5px; }

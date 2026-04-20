@@ -170,7 +170,7 @@ export default function NGOEventsPage() {
         <motion.div
           whileHover={{ y: -2, borderColor: "#95C78F" }}
           className="rounded-2xl border border-gray-200 p-10 text-center"
-          style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+          style={{ background: "var(--card-bg)" }}
         >
           <Calendar size={28} className="mx-auto mb-3 text-gray-300" />
           <p className="text-sm text-gray-400">No events yet.</p>
@@ -186,7 +186,7 @@ export default function NGOEventsPage() {
               transition={{ delay: i * 0.05 }}
               whileHover={{ y: -3, boxShadow: "0 16px 40px rgba(42,130,86,0.15)", borderColor: "#95C78F" }}
               className="rounded-2xl border border-gray-200 p-4 space-y-3"
-              style={{ background: "linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%)" }}
+              style={{ background: "var(--card-bg)" }}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
@@ -242,7 +242,7 @@ export default function NGOEventsPage() {
             <motion.div
               initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }}
               className="w-full max-w-md rounded-2xl p-6 space-y-4"
-              style={{ background: "#F5F6F1" }}
+              style={{ background: "var(--modal-bg)" }}
             >
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-gray-800">New Event</h2>
@@ -339,7 +339,7 @@ export default function NGOEventsPage() {
             <motion.div
               initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }}
               className="w-full max-w-sm rounded-2xl p-5 space-y-4"
-              style={{ background: "#F5F6F1" }}
+              style={{ background: "var(--modal-bg)" }}
             >
               <div className="flex items-center justify-between">
                 <div>

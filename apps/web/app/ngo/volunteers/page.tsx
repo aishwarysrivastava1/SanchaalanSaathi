@@ -248,7 +248,7 @@ export default function VolunteersPage() {
         <motion.div
           whileHover={{ y: -2, borderColor: "#95C78F" }}
           className="rounded-2xl border border-gray-200 p-10 text-center"
-          style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+          style={{ background: "var(--card-bg)" }}
         >
           <Users size={28} className="mx-auto mb-3 text-gray-300" />
           <p className="text-sm text-gray-400">No volunteers found.</p>
@@ -267,7 +267,7 @@ export default function VolunteersPage() {
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                 whileHover={{ y: -3, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
                 className="rounded-2xl border border-gray-200 p-4 space-y-3"
-                style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+                style={{ background: "var(--card-bg)" }}
               >
                 <div className="flex items-start gap-3">
                   <div
@@ -374,7 +374,7 @@ export default function VolunteersPage() {
                     key={r.volunteer_id}
                     initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
                     className="flex items-center gap-3 rounded-xl px-4 py-3 border border-gray-100"
-                    style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+                    style={{ background: "var(--card-bg)" }}
                   >
                     <div className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0"
                       style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}>

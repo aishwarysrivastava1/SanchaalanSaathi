@@ -106,7 +106,7 @@ export default function NGONotificationsPage() {
         <motion.div
           whileHover={{ y: -2, borderColor: "#95C78F" }}
           className="rounded-2xl border border-gray-200 p-10 text-center"
-          style={{ background: "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+          style={{ background: "var(--card-bg)" }}
         >
           <Bell size={28} className="mx-auto mb-3 text-gray-300" />
           <p className="text-sm text-gray-400">No notifications yet.</p>
@@ -126,7 +126,7 @@ export default function NGONotificationsPage() {
                   className={`rounded-2xl border p-4 flex items-start gap-3 transition-all ${
                     n.is_read ? "border-gray-100 cursor-default" : "border-gray-200 cursor-pointer hover:border-[#95C78F]"
                   }`}
-                  style={{ background: n.is_read ? "#fafafa" : "linear-gradient(135deg,#F5F6F1,#ffffff)" }}
+                  style={{ background: n.is_read ? "var(--bg-muted)" : "var(--card-bg)" }}
                   whileHover={!n.is_read ? { y: -1 } : {}}
                 >
                   <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: meta.bg }}>
