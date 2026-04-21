@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type ConnectionState = "idle" | "connecting" | "connected" | "reconnecting" | "error";
 
@@ -27,6 +27,11 @@ export function useRealtimeSocket({ token, enabled = true, onEvent }: UseRealtim
   const [lastError, setLastError] = useState<string | null>(null);
   const reconnectAttemptRef = useRef(0);
 
+  // Keep a stable ref to the latest onEvent callback so the WebSocket effect
+  // doesn't reconnect every time the parent re-renders with a new inline function.
+  const onEventRef = useRef(onEvent);
+  useLayoutEffect(() => { onEventRef.current = onEvent; }, [onEvent]);
+
   useEffect(() => {
     if (!enabled || !token) {
       setConnectionState("idle");
@@ -39,14 +44,8 @@ export function useRealtimeSocket({ token, enabled = true, onEvent }: UseRealtim
     let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
     const cleanupTimers = () => {
-      if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-        reconnectTimer = null;
-      }
-      if (heartbeatTimer) {
-        clearInterval(heartbeatTimer);
-        heartbeatTimer = null;
-      }
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
     };
 
     const connect = () => {
@@ -60,22 +59,24 @@ export function useRealtimeSocket({ token, enabled = true, onEvent }: UseRealtim
         setConnectionState("connected");
         setLastError(null);
         heartbeatTimer = setInterval(() => {
-          if (ws?.readyState === WebSocket.OPEN) {
-            ws.send("ping");
-          }
+          if (ws?.readyState === WebSocket.OPEN) ws.send("ping");
         }, 25000);
       };
 
       ws.onmessage = (evt) => {
+        // Backend sends pong as JSON; ignore plain-text non-JSON frames gracefully.
         try {
           const parsed = JSON.parse(evt.data) as RealtimeEnvelope;
-          onEvent?.(parsed);
+          // Don't surface internal pong events to consumers.
+          if (parsed.event === "pong") return;
+          onEventRef.current?.(parsed);
         } catch {
-          // Ignore malformed event payloads.
+          console.warn("[useRealtimeSocket] Non-JSON frame received:", evt.data);
         }
       };
 
-      ws.onerror = () => {
+      ws.onerror = (err) => {
+        console.warn("[useRealtimeSocket] WebSocket error:", err);
         setLastError("Realtime connection error");
       };
 
@@ -98,7 +99,7 @@ export function useRealtimeSocket({ token, enabled = true, onEvent }: UseRealtim
         ws.close();
       }
     };
-  }, [token, enabled, onEvent]);
+  }, [token, enabled]); // onEvent intentionally excluded — updated via ref above
 
   return { connectionState, lastError };
 }

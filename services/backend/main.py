@@ -36,8 +36,7 @@ async def lifespan(app: FastAPI):
     try:
         await init_db()  # create PostgreSQL tables (idempotent)
     except Exception as e:
-        import logging
-        logging.getLogger(__name__).warning(f"PostgreSQL init skipped (no DB configured?): {e}")
+        logger.warning(f"PostgreSQL init skipped (no DB configured?): {e}")
     yield
     # Shutdown
     await live_location_cache.shutdown()

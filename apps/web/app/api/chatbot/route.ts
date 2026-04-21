@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
+const genAI = new GoogleGenerativeAI(process.env.GEM_KEY ?? "");
 
 const SYSTEM_PROMPT = `You are Saathi, the Autonomous AI Assistant for Sanchaalan Saathi — an NGO coordination platform.
 Your goal is to provide a "ONE-STOP RESOLUTION" for every user. You don't just talk; you take action.
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         reply: isKey
-          ? "The Gemini API key is not configured. Please add GEMINI_API_KEY to enable the intelligent assistant."
+          ? "The Gemini API key is not configured. Please add GEM_KEY to enable the intelligent assistant."
           : "I encountered a technical issue while processing your request. Please try again.",
         action: { type: "none" },
         calls: [],

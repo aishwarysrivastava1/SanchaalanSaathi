@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { adminDb, FieldValue } from "@/lib/firebase-admin";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = new GoogleGenerativeAI(process.env.GEM_KEY!);
 
 const VERIFY_PROMPT = `You are a strict QA inspector for an NGO volunteer system.
 Determine if the photo proves the described task was completed.

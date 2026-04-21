@@ -33,7 +33,9 @@ class Neo4jService:
         if not self._driver:
             uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
             user = os.getenv("NEO4J_USER", "neo4j")
-            password = os.getenv("NEO4J_PASSWORD", "testpassword")
+            password = os.getenv("NEO4J_PASSWORD", "")
+            if not password:
+                logger.warning("NEO4J_PASSWORD is not set — using empty password (insecure in production)")
             self._driver = AsyncGraphDatabase.driver(uri, auth=(user, password))
         return self._driver
 

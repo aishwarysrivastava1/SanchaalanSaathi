@@ -10,7 +10,7 @@ const REQUIRED_PUBLIC_VARS = [
 
 const REQUIRED_SERVER_VARS = [
   "FIREBASE_SERVICE_ACCOUNT_JSON",
-  "GEMINI_API_KEY",
+  "GEM_KEY",
 ] as const;
 
 function validateUrl(name: string, value: string) {
