@@ -40,6 +40,7 @@ export default function VolProfilePage() {
   const [locationStatus, setLocationStatus] = useState<"idle" | "active" | "denied" | "error">("idle");
   const [showConsentModal, setShowConsentModal] = useState(false);
   const watchIdRef = React.useRef<number | null>(null);
+  const lastLocationSentAtRef = React.useRef<number>(0);
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone]       = useState("");
@@ -97,7 +98,13 @@ export default function VolProfilePage() {
     }
     if (!navigator.geolocation) { setLocationStatus("error"); setShareLocation(false); return; }
     watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => { setLocationStatus("active"); api.updateVolLocation(user.token, pos.coords.latitude, pos.coords.longitude).catch(() => {}); },
+      (pos) => {
+        const now = Date.now();
+        if (now - lastLocationSentAtRef.current < 3500) return;
+        lastLocationSentAtRef.current = now;
+        setLocationStatus("active");
+        api.updateVolLocation(user.token, pos.coords.latitude, pos.coords.longitude).catch(() => {});
+      },
       (err) => { setLocationStatus(err.code === err.PERMISSION_DENIED ? "denied" : "error"); setShareLocation(false); },
       { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 },
     );

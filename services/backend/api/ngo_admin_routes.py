@@ -1,5 +1,6 @@
 import datetime as dt
 from datetime import datetime, timedelta
+import os
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -9,9 +10,14 @@ from sqlalchemy import select, func, update, delete
 from db.base import get_db
 from db.models import User, VolunteerProfile, Task, Assignment, Resource, Allocation, Notification, NGO, Event, EventAttendance, TaskEnrollmentRequest
 from middleware.rbac import CurrentUser, require_ngo_admin, assert_same_ngo
+from services.assignment_dispatcher import dispatch_optimized_assignments
 from services.ai_matching import rank_volunteers
+from services.geo_routing_service import geo_routing_service
+from services.neo4j_service import neo4j_service
+from services.realtime_events import realtime_bus
 
 router = APIRouter()
+ENABLE_DYNAMIC_REASSIGNMENT = os.getenv("ENABLE_DYNAMIC_REASSIGNMENT", "true").lower() == "true"
 
 
 # ── Pydantic models ──────────────────────────────────────────────────────────
@@ -59,6 +65,15 @@ class ResourceUpdateReq(BaseModel):
 
 
 class AllocateReq(BaseModel):
+    task_id: str
+
+
+class AssignTasksReq(BaseModel):
+    max_assignments: Optional[int] = Field(None, ge=1, le=100)
+
+
+class RoutePreviewReq(BaseModel):
+    volunteer_id: str
     task_id: str
 
 
@@ -220,6 +235,32 @@ async def create_task(
     )
     db.add(task)
     await db.flush()
+
+    await neo4j_service.upsert_task_node(
+        task_id=task.id,
+        ngo_id=user.ngo_id,
+        title=task.title,
+        required_skills=task.required_skills or [],
+        urgency=float(task.urgency_score or 50),
+        status=task.status,
+        lat=task.lat,
+        lng=task.lng,
+    )
+    await realtime_bus.publish(
+        user.ngo_id,
+        "task_created",
+        {
+            "task_id": task.id,
+            "title": task.title,
+            "status": task.status,
+            "priority": task.priority,
+            "lat": task.lat,
+            "lng": task.lng,
+        },
+    )
+
+    if ENABLE_DYNAMIC_REASSIGNMENT and task.priority == "high":
+        await dispatch_optimized_assignments(ngo_id=user.ngo_id, db=db, max_assignments=3)
     return {"id": task.id, "title": task.title, "status": task.status, "priority": task.priority}
 
 
@@ -244,6 +285,28 @@ async def update_task(
     if req.deadline is not None:        task.deadline = req.deadline
     if req.lat is not None:             task.lat = req.lat
     if req.lng is not None:             task.lng = req.lng
+
+    await neo4j_service.upsert_task_node(
+        task_id=task.id,
+        ngo_id=user.ngo_id,
+        title=task.title,
+        required_skills=task.required_skills or [],
+        urgency=float(task.urgency_score or 50),
+        status=task.status,
+        lat=task.lat,
+        lng=task.lng,
+    )
+    await realtime_bus.publish(
+        user.ngo_id,
+        "assignment_updated",
+        {
+            "task_id": task.id,
+            "status": task.status,
+            "priority": task.priority,
+            "lat": task.lat,
+            "lng": task.lng,
+        },
+    )
     return {"id": task.id, "status": task.status, "priority": task.priority}
 
 
@@ -297,6 +360,22 @@ async def assign_task(
     )
     db.add(notif)
     await db.flush()
+
+    await neo4j_service.upsert_assignment_edge(
+        volunteer_id=req.volunteer_id,
+        task_id=task_id,
+        assignment_id=assignment.id,
+    )
+    await realtime_bus.publish(
+        user.ngo_id,
+        "assignment_updated",
+        {
+            "assignment_id": assignment.id,
+            "task_id": task_id,
+            "volunteer_id": req.volunteer_id,
+            "status": assignment.status,
+        },
+    )
     return {"assignment_id": assignment.id, "status": "assigned"}
 
 
@@ -454,6 +533,15 @@ async def complete_task(
         ))
 
     await db.flush()
+    await realtime_bus.publish(
+        user.ngo_id,
+        "assignment_updated",
+        {
+            "task_id": task_id,
+            "status": "completed",
+            "completed_assignments": len(active_assignments),
+        },
+    )
     return {"message": "Task completed"}
 
 
@@ -471,6 +559,58 @@ async def ai_match_task(
 
     ranked = await rank_volunteers(task_id, user.ngo_id, db)
     return {"task_id": task_id, "ranked_volunteers": ranked}
+
+
+@router.post("/assign-tasks")
+async def assign_tasks_optimized(
+    req: AssignTasksReq,
+    user: CurrentUser = Depends(require_ngo_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    created = await dispatch_optimized_assignments(
+        ngo_id=user.ngo_id,
+        db=db,
+        max_assignments=req.max_assignments,
+    )
+
+    return {"assignments": created, "count": len(created)}
+
+
+@router.post("/routes/preview")
+async def route_preview(
+    req: RoutePreviewReq,
+    user: CurrentUser = Depends(require_ngo_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    volunteer = (await db.execute(
+        select(User).where(User.id == req.volunteer_id, User.ngo_id == user.ngo_id, User.role == "volunteer")
+    )).scalar_one_or_none()
+    if not volunteer:
+        raise HTTPException(status_code=404, detail="Volunteer not found")
+
+    profile = (await db.execute(
+        select(VolunteerProfile).where(VolunteerProfile.user_id == req.volunteer_id)
+    )).scalar_one_or_none()
+    if not profile or profile.lat is None or profile.lng is None:
+        raise HTTPException(status_code=400, detail="Volunteer location unavailable")
+
+    task = (await db.execute(
+        select(Task).where(Task.id == req.task_id, Task.ngo_id == user.ngo_id)
+    )).scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.lat is None or task.lng is None:
+        raise HTTPException(status_code=400, detail="Task location unavailable")
+
+    route = await geo_routing_service.get_route(
+        start=(profile.lat, profile.lng),
+        end=(task.lat, task.lng),
+    )
+    return {
+        "task_id": task.id,
+        "volunteer_id": volunteer.id,
+        **route,
+    }
 
 
 # ── Resources ────────────────────────────────────────────────────────────────

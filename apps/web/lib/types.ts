@@ -224,3 +224,11 @@ export interface AuthResponse {
   invite_code?: string | null;
 }
 
+export type RealtimeEventName = "connected" | "location_update" | "task_created" | "assignment_updated" | "pong";
+
+export interface RealtimeEventEnvelope<T = Record<string, unknown>> {
+  event: RealtimeEventName | string;
+  payload: T;
+  timestamp?: string;
+}
+

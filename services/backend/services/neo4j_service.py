@@ -59,4 +59,86 @@ class Neo4jService:
         for query in SCHEMA_QUERIES:
             await self.run_query(query)
 
+    async def upsert_volunteer_location(
+        self,
+        volunteer_id: str,
+        ngo_id: str | None,
+        lat: float | None,
+        lng: float | None,
+        share_location: bool,
+    ) -> None:
+        await self.run_query(
+            """
+            MERGE (v:Volunteer {id: $volunteer_id})
+            SET v.ngo_id = $ngo_id,
+                v.lat = $lat,
+                v.lng = $lng,
+                v.share_location = $share_location,
+                v.availabilityStatus = CASE WHEN $share_location THEN coalesce(v.availabilityStatus, 'ACTIVE') ELSE 'OFFLINE' END,
+                v.updated_at = datetime()
+            """,
+            {
+                "volunteer_id": volunteer_id,
+                "ngo_id": ngo_id,
+                "lat": lat,
+                "lng": lng,
+                "share_location": share_location,
+            },
+        )
+
+    async def upsert_task_node(
+        self,
+        task_id: str,
+        ngo_id: str | None,
+        title: str,
+        required_skills: list[str],
+        urgency: float,
+        status: str,
+        lat: float | None,
+        lng: float | None,
+    ) -> None:
+        await self.run_query(
+            """
+            MERGE (t:Task {id: $task_id})
+            SET t.ngo_id = $ngo_id,
+                t.title = $title,
+                t.requiredSkills = $required_skills,
+                t.urgency = $urgency,
+                t.status = $status,
+                t.lat = $lat,
+                t.lng = $lng,
+                t.updated_at = datetime()
+            """,
+            {
+                "task_id": task_id,
+                "ngo_id": ngo_id,
+                "title": title,
+                "required_skills": required_skills,
+                "urgency": urgency,
+                "status": status,
+                "lat": lat,
+                "lng": lng,
+            },
+        )
+
+    async def upsert_assignment_edge(
+        self,
+        volunteer_id: str,
+        task_id: str,
+        assignment_id: str,
+    ) -> None:
+        await self.run_query(
+            """
+            MERGE (v:Volunteer {id: $volunteer_id})
+            MERGE (t:Task {id: $task_id})
+            MERGE (v)-[a:ASSIGNED_TO {assignment_id: $assignment_id}]->(t)
+            SET a.updated_at = datetime()
+            """,
+            {
+                "volunteer_id": volunteer_id,
+                "task_id": task_id,
+                "assignment_id": assignment_id,
+            },
+        )
+
 neo4j_service = Neo4jService()

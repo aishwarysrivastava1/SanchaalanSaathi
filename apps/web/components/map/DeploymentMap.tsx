@@ -9,7 +9,9 @@ import FilterBar from "./ui/FilterBar";
 import EntityDetailPanel from "./ui/EntityDetailPanel";
 import { VolunteerPin, OperationPin, ResourcePin } from "./data/types";
 import { api } from "../../lib/ngo-api";
+import type { RealtimeEventEnvelope } from "../../lib/types";
 import { useNGOAuth } from "../../lib/ngo-auth";
+import { useRealtimeSocket } from "../../hooks/useRealtimeSocket";
 
 // ── CSS keyframes injected once into <head> ───────────────────────────────────
 const MAP_CSS = `
@@ -255,6 +257,87 @@ export default function DeploymentMap() {
   const [liveVols, setLiveVols]   = useState<VolunteerPin[]>([]);
   const [operations, setOps]      = useState<OperationPin[]>([]);
   const [resources, setResources] = useState<ResourcePin[]>([]);
+  const [routePaths, setRoutePaths] = useState<Record<string, { lat: number; lng: number }[]>>({});
+
+  const handleRealtimeEvent = useCallback((message: RealtimeEventEnvelope) => {
+    if (message.event === "location_update") {
+      const payload = message.payload as {
+        volunteer_id?: string;
+        lat?: number | null;
+        lng?: number | null;
+        share_location?: boolean;
+      };
+      if (!payload.volunteer_id) return;
+      if (!payload.share_location || payload.lat == null || payload.lng == null) {
+        setLiveVols((prev) => prev.filter((v) => v.user_id !== payload.volunteer_id));
+        return;
+      }
+
+      setLiveVols((prev) => {
+        const idx = prev.findIndex((v) => v.user_id === payload.volunteer_id);
+        if (idx === -1) return prev;
+        const next = [...prev];
+        next[idx] = { ...next[idx], lat: payload.lat, lng: payload.lng };
+        return next;
+      });
+      return;
+    }
+
+    if (message.event === "task_created") {
+      const payload = message.payload as {
+        task_id?: string;
+        title?: string;
+        status?: string;
+        lat?: number | null;
+        lng?: number | null;
+      };
+      if (!payload.task_id || payload.lat == null || payload.lng == null) return;
+
+      setOps((prev) => {
+        if (prev.some((op) => op.id === payload.task_id)) return prev;
+        return [
+          {
+            id: payload.task_id,
+            title: payload.title || "Task",
+            lat: payload.lat,
+            lng: payload.lng,
+            status: payload.status === "completed" ? "completed" : "active",
+            assigned: 0,
+            needed: 0,
+            description: "",
+          },
+          ...prev,
+        ];
+      });
+      return;
+    }
+
+    if (message.event === "assignment_updated") {
+      const payload = message.payload as {
+        task_id?: string;
+        status?: string;
+        lat?: number | null;
+        lng?: number | null;
+      };
+      if (!payload.task_id) return;
+      setOps((prev) => prev.map((op) => (
+        op.id === payload.task_id
+          ? {
+              ...op,
+              status: payload.status === "completed" ? "completed" : "active",
+              lat: payload.lat ?? op.lat,
+              lng: payload.lng ?? op.lng,
+            }
+          : op
+      )));
+    }
+  }, []);
+
+  const { connectionState } = useRealtimeSocket({
+    token: user?.token,
+    enabled: Boolean(user?.token),
+    onEvent: handleRealtimeEvent,
+  });
 
   // Zoom state for clustering
   const [zoom, setZoom] = useState(5);
@@ -271,19 +354,34 @@ export default function DeploymentMap() {
 
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
-    drawRoutingLines(liveVols, operations);
+    drawRoutingLines(liveVols, operations, routePaths);
     const listener = mapRef.current.addListener("zoom_changed", () => {
       setZoom(mapRef.current?.getZoom() ?? 5);
     });
     return () => google.maps.event.removeListener(listener);
-  }, [mapReady]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mapReady, liveVols, operations, routePaths, drawRoutingLines]);
 
   // Poll volunteers/tasks/resources every 15s
   useEffect(() => {
     if (!user) return;
-    const fetchAll = () => {
-      api.volunteerLocations(user.token).then((rows: any[]) => {
-        setLiveVols(rows.map((r) => ({
+    const fetchAll = async () => {
+      try {
+        const [volRows, taskRows, resourceRows, assignmentRows] = await Promise.all([
+          api.volunteerLocations(user.token),
+          api.ngoTasks(user.token),
+          api.ngoResources(user.token),
+          api.ngoAssignments(user.token),
+        ]);
+
+        const activeAssignments = assignmentRows.filter((a) => a.status === "assigned" || a.status === "accepted");
+        const assignmentByVolunteer = new Map<string, string>();
+        for (const a of activeAssignments) {
+          if (!assignmentByVolunteer.has(a.volunteer_id)) {
+            assignmentByVolunteer.set(a.volunteer_id, a.task_id);
+          }
+        }
+
+        setLiveVols(volRows.map((r: any) => ({
           id:       r.user_id,
           user_id:  r.user_id,
           name:     r.email,
@@ -293,28 +391,25 @@ export default function DeploymentMap() {
           status:   r.status === "active" ? "available" : "busy",
           skills:   r.skills ?? [],
           initials: emailToInitials(r.email),
+          assignedTo: assignmentByVolunteer.get(r.user_id),
         })));
-      }).catch(() => {});
 
-      api.ngoTasks(user.token).then((rows: any[]) => {
-        setOps(rows
-          .filter((t) => t.lat != null && t.lng != null)
-          .map((t) => ({
+        setOps(taskRows
+          .filter((t: any) => t.lat != null && t.lng != null)
+          .map((t: any) => ({
             id:          t.id,
             title:       t.title,
             lat:         t.lat,
             lng:         t.lng,
-            status:      t.status === "open" ? "active" : t.status === "in_progress" ? "active" : t.status === "completed" ? "completed" : "active",
-            assigned:    0,
+            status:      t.status === "completed" ? "completed" : "active",
+            assigned:    activeAssignments.filter((a) => a.task_id === t.id).length,
             needed:      0,
             description: t.description ?? "",
           })));
-      }).catch(() => {});
 
-      api.ngoResources(user.token).then((rows: any[]) => {
-        setResources(rows
-          .filter((r) => r.lat != null && r.lng != null)
-          .map((r) => ({
+        setResources(resourceRows
+          .filter((r: any) => r.lat != null && r.lng != null)
+          .map((r: any) => ({
             id:    r.id,
             title: r.type,
             lat:   r.lat,
@@ -322,7 +417,26 @@ export default function DeploymentMap() {
             type:  (["medical", "food", "equipment"].includes(r.type) ? r.type : "equipment") as "medical" | "food" | "equipment",
             stock: r.quantity ?? 0,
           })));
-      }).catch(() => {});
+
+        const previewRows = activeAssignments.slice(0, 10);
+        const previews = await Promise.all(previewRows.map(async (a) => {
+          try {
+            const route = await api.routePreview(user.token, a.volunteer_id, a.task_id);
+            if (!route.polyline || route.polyline.length < 2) return null;
+            return { key: `${a.volunteer_id}:${a.task_id}`, polyline: route.polyline };
+          } catch {
+            return null;
+          }
+        }));
+
+        const nextPaths: Record<string, { lat: number; lng: number }[]> = {};
+        previews.forEach((p) => {
+          if (p) nextPaths[p.key] = p.polyline;
+        });
+        setRoutePaths(nextPaths);
+      } catch {
+        // Keep existing map state when polling fails.
+      }
     };
     fetchAll();
     const id = setInterval(fetchAll, 15000);
@@ -331,8 +445,8 @@ export default function DeploymentMap() {
 
   // Redraw routing lines when live volunteer positions/assignments update
   useEffect(() => {
-    if (mapReady) drawRoutingLines(liveVols, operations);
-  }, [liveVols, mapReady, drawRoutingLines]);
+    if (mapReady) drawRoutingLines(liveVols, operations, routePaths);
+  }, [liveVols, operations, routePaths, mapReady, drawRoutingLines]);
 
   const handleVolClick = useCallback((v: VolunteerPin) => {
     select("volunteer", v);
@@ -373,6 +487,9 @@ export default function DeploymentMap() {
         >
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#95C78F", display: "inline-block", animation: "pulse-ring 1.8s ease-out infinite" }} />
           {liveVols.length > 0 ? `${liveVols.length} LIVE` : "NO VOLUNTEERS SHARING"}
+          <span style={{ opacity: 0.75 }}>
+            {connectionState === "connected" ? "WS ON" : "WS RETRY"}
+          </span>
         </div>
       )}
 

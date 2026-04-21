@@ -146,6 +146,14 @@ export const api = {
     return ngoGet<TaskResponse[]>(`/api/ngo/tasks${q ? `?${q}` : ""}`, token);
   },
 
+  ngoAssignments: (token: string, params?: { status?: string }) => {
+    const q = new URLSearchParams(params as Record<string, string>).toString();
+    return ngoGet<{ id: string; task_id: string; volunteer_id: string; status: string; assigned_at: string }[]>(
+      `/api/ngo/assignments${q ? `?${q}` : ""}`,
+      token,
+    );
+  },
+
   createTask: (token: string, body: { title: string; description: string; required_skills: string[]; deadline?: string; lat?: number; lng?: number }) =>
     ngoPost<TaskResponse>("/api/ngo/tasks", token, body),
 
@@ -157,6 +165,20 @@ export const api = {
 
   assignTask: (token: string, taskId: string, volunteerId: string) =>
     ngoPost<any>(`/api/ngo/tasks/${taskId}/assign`, token, { volunteer_id: volunteerId }),
+
+  assignTasksOptimized: (token: string, max_assignments?: number) =>
+    ngoPost<{ assignments: { assignment_id: string; task_id: string; volunteer_id: string; match_score: number }[]; count: number }>(
+      "/api/ngo/assign-tasks",
+      token,
+      max_assignments ? { max_assignments } : {},
+    ),
+
+  routePreview: (token: string, volunteerId: string, taskId: string) =>
+    ngoPost<{ volunteer_id: string; task_id: string; source: string; distance_km: number; duration_s: number; polyline: { lat: number; lng: number }[] }>(
+      "/api/ngo/routes/preview",
+      token,
+      { volunteer_id: volunteerId, task_id: taskId },
+    ),
 
   aiMatch: (token: string, taskId: string) =>
     ngoPost<{ ranked_volunteers: any[] }>(`/api/ngo/tasks/${taskId}/ai-match`, token),
@@ -213,6 +235,9 @@ export const api = {
   clearVolLocation: (token: string) =>
     fetch(`${BASE}/api/volunteer/location`, { method: "DELETE", headers: authHeaders(token) })
       .then(handleRes<any>),
+
+  triggerSOS: (token: string, body?: { message?: string; lat?: number; lng?: number }) =>
+    ngoPost<{ status: string; notified: number }>("/api/volunteer/sos", token, body ?? {}),
 
   volTasks: (token: string) =>
     ngoGet<any[]>("/api/volunteer/tasks", token),

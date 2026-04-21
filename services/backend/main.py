@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 from api import graph_routes, seed_routes, ingest_routes, simulation_routes, analytics_routes, volunteer_routes
 from api.auth_routes       import router as auth_router
 from api.ngo_admin_routes  import router as ngo_router
+from api.realtime_routes   import router as realtime_router
 from api.vol_mgmt_routes   import router as vol_router
+from services.live_location_cache import live_location_cache
 from services.neo4j_service import neo4j_service
 from db.base import init_db
 from utils.auth_utils import validate_jwt_config
@@ -29,6 +31,7 @@ load_dotenv()
 async def lifespan(app: FastAPI):
     # Startup
     validate_jwt_config()
+    await live_location_cache.startup()
     await neo4j_service.initialize_schema()
     try:
         await init_db()  # create PostgreSQL tables (idempotent)
@@ -37,6 +40,7 @@ async def lifespan(app: FastAPI):
         logging.getLogger(__name__).warning(f"PostgreSQL init skipped (no DB configured?): {e}")
     yield
     # Shutdown
+    await live_location_cache.shutdown()
     await neo4j_service.close_driver()
 
 
@@ -100,6 +104,7 @@ app.include_router(volunteer_routes.router,  prefix="/api/volunteers", tags=["Vo
 # ── New NGO multi-tenancy routes (PostgreSQL / JWT) ──────────────────────────
 app.include_router(auth_router, prefix="/api/auth",       tags=["Auth"])
 app.include_router(ngo_router,  prefix="/api/ngo",        tags=["NGO Admin"])
+app.include_router(realtime_router, prefix="/api/realtime", tags=["Realtime"])
 app.include_router(vol_router,  prefix="/api/volunteer",  tags=["Volunteer Management"])
 
 

@@ -47,6 +47,7 @@ export function useMapController() {
   const drawRoutingLines = useCallback((
     volunteers: { id: string; lat: number; lng: number; assignedTo?: string }[],
     operations: { id: string; lat: number; lng: number }[],
+    routePaths?: Record<string, { lat: number; lng: number }[]>,
   ) => {
     linesRef.current.forEach((l) => l.setMap(null));
     linesRef.current = [];
@@ -56,8 +57,12 @@ export function useMapController() {
       if (!v.assignedTo) return;
       const op = opMap.get(v.assignedTo);
       if (!op) return;
+      const routeKey = `${v.id}:${v.assignedTo}`;
+      const path = routePaths?.[routeKey] && routePaths[routeKey].length > 1
+        ? routePaths[routeKey]
+        : [{ lat: v.lat, lng: v.lng }, { lat: op.lat, lng: op.lng }];
       const line = new google.maps.Polyline({
-        path: [{ lat: v.lat, lng: v.lng }, { lat: op.lat, lng: op.lng }],
+        path,
         strokeColor:   "#48A15E",
         strokeOpacity: 0,
         icons: [{

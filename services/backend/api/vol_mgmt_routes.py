@@ -1,5 +1,6 @@
 import datetime as dt
 from datetime import datetime
+import os
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -11,8 +12,15 @@ from db.models import User, VolunteerProfile, Task, Assignment, Notification, Ta
 from api.schemas import VolunteerProfileResponse
 from middleware.consent import require_ai_training_consent
 from middleware.rbac import CurrentUser, require_volunteer
+from services.assignment_dispatcher import dispatch_optimized_assignments
+from services.geo_routing_service import haversine_km
+from services.live_location_cache import live_location_cache
+from services.neo4j_service import neo4j_service
+from services.realtime_events import realtime_bus
 
 router = APIRouter()
+ENABLE_DYNAMIC_REASSIGNMENT = os.getenv("ENABLE_DYNAMIC_REASSIGNMENT", "true").lower() == "true"
+REASSIGNMENT_MOVE_THRESHOLD_KM = float(os.getenv("REASSIGNMENT_MOVE_THRESHOLD_KM", "0.2"))
 
 
 # ── Pydantic models ──────────────────────────────────────────────────────────
@@ -46,6 +54,12 @@ class LocationUpdateReq(BaseModel):
     lat:            float = Field(..., ge=-90,  le=90)
     lng:            float = Field(..., ge=-180, le=180)
     share_location: bool  = True
+
+
+class SOSReq(BaseModel):
+    message: Optional[str] = Field(None, max_length=500)
+    lat: Optional[float] = Field(None, ge=-90, le=90)
+    lng: Optional[float] = Field(None, ge=-180, le=180)
 
 
 # ── Dashboard ────────────────────────────────────────────────────────────────
@@ -492,9 +506,41 @@ async def update_location(
     )).scalar_one_or_none()
     if not vp:
         raise HTTPException(status_code=404, detail="Volunteer profile not found")
+    old_lat, old_lng = vp.lat, vp.lng
     vp.lat = req.lat
     vp.lng = req.lng
     vp.share_location = req.share_location
+
+    await live_location_cache.set_location(
+        volunteer_id=user.user_id,
+        ngo_id=user.ngo_id,
+        lat=req.lat,
+        lng=req.lng,
+        share_location=req.share_location,
+    )
+    await neo4j_service.upsert_volunteer_location(
+        volunteer_id=user.user_id,
+        ngo_id=user.ngo_id,
+        lat=req.lat,
+        lng=req.lng,
+        share_location=req.share_location,
+    )
+    await realtime_bus.publish(
+        user.ngo_id,
+        "location_update",
+        {
+            "volunteer_id": user.user_id,
+            "lat": req.lat,
+            "lng": req.lng,
+            "share_location": req.share_location,
+        },
+    )
+
+    moved_km = 0.0
+    if old_lat is not None and old_lng is not None:
+        moved_km = haversine_km(old_lat, old_lng, req.lat, req.lng)
+    if ENABLE_DYNAMIC_REASSIGNMENT and req.share_location and moved_km >= REASSIGNMENT_MOVE_THRESHOLD_KM:
+        await dispatch_optimized_assignments(ngo_id=user.ngo_id, db=db, max_assignments=2)
     return {"share_location": vp.share_location, "lat": vp.lat, "lng": vp.lng}
 
 
@@ -511,7 +557,70 @@ async def clear_location(
     vp.lat = None
     vp.lng = None
     vp.share_location = False
+
+    await live_location_cache.set_location(
+        volunteer_id=user.user_id,
+        ngo_id=user.ngo_id,
+        lat=None,
+        lng=None,
+        share_location=False,
+    )
+    await neo4j_service.upsert_volunteer_location(
+        volunteer_id=user.user_id,
+        ngo_id=user.ngo_id,
+        lat=None,
+        lng=None,
+        share_location=False,
+    )
+    await realtime_bus.publish(
+        user.ngo_id,
+        "location_update",
+        {
+            "volunteer_id": user.user_id,
+            "lat": None,
+            "lng": None,
+            "share_location": False,
+        },
+    )
     return {"share_location": False}
+
+
+@router.post("/sos")
+async def send_sos(
+    req: SOSReq,
+    user: CurrentUser = Depends(require_volunteer),
+    db: AsyncSession = Depends(get_db),
+):
+    profile = (await db.execute(
+        select(VolunteerProfile).where(VolunteerProfile.user_id == user.user_id)
+    )).scalar_one_or_none()
+    lat = req.lat if req.lat is not None else (profile.lat if profile else None)
+    lng = req.lng if req.lng is not None else (profile.lng if profile else None)
+    message = (req.message or "Volunteer triggered SOS").strip()
+
+    admins = (await db.execute(
+        select(User).where(User.ngo_id == user.ngo_id, User.role == "ngo_admin")
+    )).scalars().all()
+    for admin in admins:
+        db.add(Notification(
+            user_id=admin.id,
+            message=f"SOS from {user.email}: {message}",
+            type="urgent",
+        ))
+
+    await realtime_bus.publish(
+        user.ngo_id,
+        "sos_alert",
+        {
+            "volunteer_id": user.user_id,
+            "email": user.email,
+            "message": message,
+            "lat": lat,
+            "lng": lng,
+            "created_at": dt.datetime.utcnow().isoformat() + "Z",
+        },
+    )
+    return {"status": "sent", "notified": len(admins)}
 
 
 @router.get("/open-tasks")
