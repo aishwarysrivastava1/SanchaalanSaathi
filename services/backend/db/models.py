@@ -2,7 +2,7 @@ import uuid
 import datetime
 from sqlalchemy import (
     String, Text, Integer, Float, Boolean, DateTime, Date,
-    ForeignKey, JSON, Index,
+    ForeignKey, JSON, Index, UniqueConstraint,
 )
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
