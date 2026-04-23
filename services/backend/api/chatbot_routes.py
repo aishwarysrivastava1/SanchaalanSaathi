@@ -68,7 +68,7 @@ async def chat_stream(
         
         # 1.a Backpressure & Queueing limits with Session Fairness
         try:
-            await queue_manager.acquire(db, identifier, session_id)
+            await queue_manager.acquire(identifier, session_id)
         except ValueError as e:
             trace.add_event("rejected", "Queue Throttled")
             return StreamingResponse(iter([f"data: {json.dumps({'error': str(e)})}\n\n"]), media_type="text/event-stream")
@@ -185,7 +185,7 @@ async def chat_stream(
                 yield f"data: {json.dumps({'error': 'Platform currently unavailable. Retrying gracefully.'})}\n\n"
             finally:
                 # Essential Queue Backpressure Release strictly mapping session IDs
-                await queue_manager.release(db, identifier, session_id)
+                queue_manager.release(identifier, session_id)
                 logger.info(f"Released queue slot for {identifier}")
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

@@ -1,106 +1,67 @@
+import asyncio
 import logging
-import datetime
-from sqlalchemy import select, update, delete
-from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import AsyncSession
-from db.models import GlobalResourceCounter
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
 class BackpressureManager:
     """
-    Stateless, DB-backed Concurrency Engine.
-    Enforces limits across distributed serverless instances using atomic conditional updates.
+    In-memory concurrency gateway. Bounds active requests globally,
+    per-user, and per-session to prevent monopolization.
+    
+    NOTE: This is instance-local state. On Vercel/serverless each cold-start
+    gets a fresh manager, which is acceptable — the limits exist to prevent
+    a single instance from being overwhelmed, not for global coordination.
     """
     def __init__(self, global_limit=100, max_queue=500, max_per_user=5, max_per_session=2):
         self.global_limit = global_limit
-        self.max_queue = max_queue # We'll treat this as a soft limit for now
+        self.max_queue = max_queue
         self.max_per_user = max_per_user
         self.max_per_session = max_per_session
-        self.epoch = datetime.datetime(2000, 1, 1) # Constant for uq_res_ts compatibility
-
-    async def _atomic_acquire(self, db: AsyncSession, key: str, max_limit: int) -> bool:
-        """Atomic incremental acquire with conditional bound check."""
-        expires = datetime.datetime.utcnow() + datetime.timedelta(minutes=5) # 5m lock TTL
         
-        stmt = (
-            insert(GlobalResourceCounter)
-            .values(
-                resource_key=key,
-                timestamp_minute=self.epoch,
-                current_value=1,
-                expires_at=expires
-            )
-            .on_conflict_do_update(
-                constraint="uq_res_ts",
-                set_={
-                    "current_value": GlobalResourceCounter.current_value + 1,
-                    "expires_at": expires
-                },
-                where=(GlobalResourceCounter.current_value < max_limit)
-            )
-            .returning(GlobalResourceCounter.current_value)
-        )
-        
-        try:
-            result = await db.execute(stmt)
-            val = result.scalar()
-            if val is not None:
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Concurrency acquire failure for {key}: {e}")
-            return False
+        self.active_slots = 0
+        self.queued_slots = 0
+        self.user_counters: dict[str, int] = defaultdict(int)
+        self.session_counters: dict[str, int] = defaultdict(int)
+        self._semaphore = asyncio.Semaphore(global_limit)
 
-    async def _atomic_release(self, db: AsyncSession, key: str):
-        """Decrement counter atomically."""
-        stmt = (
-            update(GlobalResourceCounter)
-            .where(GlobalResourceCounter.resource_key == key, GlobalResourceCounter.timestamp_minute == self.epoch)
-            .where(GlobalResourceCounter.current_value > 0)
-            .values(current_value=GlobalResourceCounter.current_value - 1)
-        )
-        try:
-            await db.execute(stmt)
-            await db.commit()
-        except Exception as e:
-            logger.error(f"Concurrency release failure for {key}: {e}")
-
-    async def acquire(self, db: AsyncSession, user_id: str, session_id: str) -> None:
+    async def acquire(self, user_id: str, session_id: str) -> None:
         """
-        Hardened Acquire:
-        1. Check/Reserve Global Slot
-        2. Check/Reserve User Slot
-        3. Check/Reserve Session Slot
+        Request execution slot. May block if globally throttled.
+        Raises ValueError if rejected (translate to 429).
         """
-        # 1. Global Concurrency
-        if not await self._atomic_acquire(db, "conc:global", self.global_limit):
-            raise ValueError("Global system capacity reached. Please retry in a moment.")
+        if self.queued_slots >= self.max_queue:
+            logger.warning("Queue overflow triggered. Emitting 429 rejection.")
+            raise ValueError("System is currently experiencing extreme load. Try again.")
 
-        # 2. User Concurrency
-        if not await self._atomic_acquire(db, f"conc:user:{user_id}", self.max_per_user):
-            # Rollback global if user fails
-            await self._atomic_release(db, "conc:global")
-            raise ValueError("You have too many active chat requests. Await completion.")
+        if self.user_counters[user_id] >= self.max_per_user:
+            logger.warning(f"User {user_id} throttled globally.")
+            raise ValueError("You are sending requests too quickly. Please wait.")
+            
+        if self.session_counters[session_id] >= self.max_per_session:
+            logger.warning(f"Session {session_id} throttled.")
+            raise ValueError("Multiple active queries detected. Await current response.")
 
-        # 3. Session Concurrency
-        if not await self._atomic_acquire(db, f"conc:sess:{session_id}", self.max_per_session):
-            # Rollback previous if session fails
-            await self._atomic_release(db, "conc:global")
-            await self._atomic_release(db, f"conc:user:{user_id}")
-            raise ValueError("Multiple queries detected in this session. Await the first response.")
+        self.queued_slots += 1
+        try:
+            await self._semaphore.acquire()
+            self.active_slots += 1
+            self.user_counters[user_id] += 1
+            self.session_counters[session_id] += 1
+        finally:
+            self.queued_slots -= 1
 
-        await db.commit()
-        logger.info(f"Slots reserved for {user_id} | {session_id}")
-
-    async def release(self, db: AsyncSession, user_id: str, session_id: str) -> None:
-        """Explicitly release all reserved slots."""
-        # Note: We don't commit until all 3 are done to minimize round-trips if possible,
-        # but _atomic_release handles its own commit for safety.
-        await self._atomic_release(db, "conc:global")
-        await self._atomic_release(db, f"conc:user:{user_id}")
-        await self._atomic_release(db, f"conc:sess:{session_id}")
-        logger.info(f"Slots released for {user_id} | {session_id}")
+    def release(self, user_id: str, session_id: str) -> None:
+        """Release execution slot cleanly."""
+        if self.user_counters[user_id] > 0:
+            self.user_counters[user_id] -= 1
+            
+        if self.session_counters[session_id] > 0:
+            self.session_counters[session_id] -= 1
+            
+        if self.active_slots > 0:
+            self.active_slots -= 1
+        self._semaphore.release()
 
 # Global Singleton Manager instance 
 queue_manager = BackpressureManager()

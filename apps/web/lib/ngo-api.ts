@@ -146,21 +146,21 @@ export const api = {
     certifications?: string[];
     availability_notes?: string;
   }): Promise<AuthResponse> =>
-    fetch(`${BASE}/api/auth/signup`, {
+    fetchSafe(`${BASE}/api/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }).then(handleRes<AuthResponse>),
 
   googleAuth: (body: { email: string; firebase_uid: string; role: string; invite_code?: string }) =>
-    fetch(`${BASE}/api/auth/google`, {
+    fetchSafe(`${BASE}/api/auth/google`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }).then(handleRes<AuthResponse>),
 
   chatbotProxy: (token: string | null, body: any) =>
-    fetch(`${BASE}/api/chatbot`, {
+    fetchSafe(`${BASE}/api/chatbot`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -170,13 +170,13 @@ export const api = {
     }),
 
   guestAuth: (): Promise<AuthResponse> =>
-    fetch(`${BASE}/api/auth/guest`, {
+    fetchSafe(`${BASE}/api/auth/guest`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     }).then(handleRes<AuthResponse>),
 
   lookupNGO: (inviteCode: string) =>
-    fetch(`${BASE}/api/auth/ngo/lookup/${encodeURIComponent(inviteCode)}`)
+    fetchSafe(`${BASE}/api/auth/ngo/lookup/${encodeURIComponent(inviteCode)}`)
       .then(handleRes<{ ngo_name: string; invite_code: string }>),
 
   createNGO: (token: string, body: {
