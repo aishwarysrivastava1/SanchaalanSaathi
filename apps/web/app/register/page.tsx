@@ -43,6 +43,14 @@ export default function RegisterPage() {
   const [volMotivation, setVolMotivation] = useState("");
   const [volEducation, setVolEducation] = useState("");
   const [volYearsExperience, setVolYearsExperience] = useState("");
+  const [volSkills, setVolSkills] = useState("");
+  const [volBio, setVolBio] = useState("");
+  const [volDateOfBirth, setVolDateOfBirth] = useState("");
+  const [volEmergencyName, setVolEmergencyName] = useState("");
+  const [volEmergencyPhone, setVolEmergencyPhone] = useState("");
+  const [volRoles, setVolRoles] = useState("");
+  const [volCertifications, setVolCertifications] = useState("");
+  const [volAvailabilityNotes, setVolAvailabilityNotes] = useState("");
 
   const splitCsv = (value: string) =>
     value.split(",").map((x) => x.trim()).filter(Boolean);
@@ -100,6 +108,14 @@ export default function RegisterPage() {
           causes_supported: splitCsv(volCauses),
           education_level: volEducation || undefined,
           years_experience: volYearsExperience ? Number(volYearsExperience) : undefined,
+          skills: splitCsv(volSkills),
+          bio: volBio || undefined,
+          date_of_birth: volDateOfBirth ? volDateOfBirth : undefined,
+          emergency_contact_name: volEmergencyName || undefined,
+          emergency_contact_phone: volEmergencyPhone || undefined,
+          preferred_roles: splitCsv(volRoles),
+          certifications: splitCsv(volCertifications),
+          availability_notes: volAvailabilityNotes || undefined,
         });
         localStorage.setItem("ngo_token", signup.token);
         document.cookie = `ngo_token=${signup.token}; path=/; max-age=${60 * 60 * 24}`;
@@ -383,6 +399,64 @@ export default function RegisterPage() {
                     style={inputStyle}
                   />
                 </div>
+                <div>
+                  <label className="text-xs font-medium text-white/60 block mb-1">Skills (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={volSkills}
+                    onChange={(e) => setVolSkills(e.target.value)}
+                    placeholder="Python, Teaching, Logistics"
+                    className="w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 outline-none"
+                    style={inputStyle}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-white/60 block mb-1">Date of Birth</label>
+                    <input
+                      type="date"
+                      value={volDateOfBirth}
+                      onChange={(e) => setVolDateOfBirth(e.target.value)}
+                      className="w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 outline-none"
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-white/60 block mb-1">Preferred Roles (csv)</label>
+                    <input
+                      type="text"
+                      value={volRoles}
+                      onChange={(e) => setVolRoles(e.target.value)}
+                      placeholder="Mentor, Driver"
+                      className="w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 outline-none"
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-white/60 block mb-1">Emergency Contact Name</label>
+                    <input
+                      type="text"
+                      value={volEmergencyName}
+                      onChange={(e) => setVolEmergencyName(e.target.value)}
+                      placeholder="Name"
+                      className="w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 outline-none"
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-white/60 block mb-1">Emergency Contact Phone</label>
+                    <input
+                      type="text"
+                      value={volEmergencyPhone}
+                      onChange={(e) => setVolEmergencyPhone(e.target.value)}
+                      placeholder="+91 ..."
+                      className="w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 outline-none"
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-medium text-white/60 block mb-1">Education Level</label>
@@ -410,12 +484,45 @@ export default function RegisterPage() {
                   </div>
                 </div>
                 <div>
+                  <label className="text-xs font-medium text-white/60 block mb-1">Certifications (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={volCertifications}
+                    onChange={(e) => setVolCertifications(e.target.value)}
+                    placeholder="CPR, First Aid"
+                    className="w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 outline-none"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-white/60 block mb-1">Bio</label>
+                  <textarea
+                    value={volBio}
+                    onChange={(e) => setVolBio(e.target.value)}
+                    rows={2}
+                    placeholder="Tell us about yourself..."
+                    className="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 outline-none resize-none"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
                   <label className="text-xs font-medium text-white/60 block mb-1">Motivation Statement</label>
                   <textarea
                     value={volMotivation}
                     onChange={(e) => setVolMotivation(e.target.value)}
                     rows={2}
                     placeholder="Why do you want to volunteer?"
+                    className="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 outline-none resize-none"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-white/60 block mb-1">Availability Notes</label>
+                  <textarea
+                    value={volAvailabilityNotes}
+                    onChange={(e) => setVolAvailabilityNotes(e.target.value)}
+                    rows={2}
+                    placeholder="E.g., I'm usually available on weekends"
                     className="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 outline-none resize-none"
                     style={inputStyle}
                   />

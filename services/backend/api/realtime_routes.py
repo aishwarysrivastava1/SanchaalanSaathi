@@ -17,7 +17,6 @@ router = APIRouter()
 async def realtime_status():
     return {
         **realtime_bus.stats(),
-        "redis_enabled": live_location_cache.enabled,
     }
 
 

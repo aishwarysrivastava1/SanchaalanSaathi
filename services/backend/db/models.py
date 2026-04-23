@@ -310,3 +310,25 @@ class ChatbotMessage(Base):
     latency_ms:  Mapped[int | None] = mapped_column(Integer, nullable=True)
     user_feedback: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at:  Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.utcnow)
+
+# ── Guests ───────────────────────────────────────────────────────────────────
+
+class Guest(Base):
+    __tablename__ = "guests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_gen_id)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.utcnow)
+    last_active_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.utcnow)
+    is_converted_to_user: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+
+
+class GuestData(Base):
+    __tablename__ = "guest_data"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_gen_id)
+    guest_id: Mapped[str] = mapped_column(String(36), ForeignKey("guests.id"), unique=True, index=True)
+    data: Mapped[dict] = mapped_column(JSON, default=dict)
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow
+    )
+

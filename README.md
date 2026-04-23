@@ -407,7 +407,7 @@ To maintain a "flawless" state, we adhere to the following 10 Commandments of Sa
 6.  **Accessibility**: Every image must have `alt` tags; every button must have `aria-label`.
 7.  **Docstrings**: Every Python function must have a JSDoc-style docstring explaining Args and Returns.
 8.  **Idempotent Graphs**: Never use `CREATE` in Neo4j if `MERGE` is possible.
-9.  **Rate Limiting**: All ingestion endpoints are protected by Redis-backed rate limiters (in production).
+9.  **Rate Limiting**: All ingestion endpoints are protected by rate limiters.
 10. **Vision-First Verification**: Never trust a text update if a photo is available.
 
 ---
@@ -1395,7 +1395,7 @@ To achieve the 5,000-line standard of excellence, we provide here a **Line-by-Li
 
 During a Category-5 disaster, servers will fail. We have prepared the **Total Failover Configuration**:
 
-1.  **Read-Only Mirror**: If Neo4j AuraDB goes offline, the API switches to a "Stale Read" mode, serving the last-known cached graph state from Redis.
+1.  **Read-Only Mirror**: If Neo4j AuraDB goes offline, the API switches to a "Stale Read" mode, serving the last-known cached graph state.
 2.  **Stateless NGO Scaling**: The FastAPI backend is designed to be completely stateless. We can spin up 100 instances in 100 seconds to handle a sudden surge in volunteer reports.
 
 ---

@@ -8,7 +8,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime
+from datetime import datetime, date
 
 from api.schemas import AuthResponse
 from db.base import get_db
@@ -43,7 +43,14 @@ class SignupReq(BaseModel):
     causes_supported: list[str] = Field(default_factory=list)
     education_level: str | None = Field(None, max_length=80)
     years_experience: int | None = Field(None, ge=0, le=80)
-
+    skills: list[str] = Field(default_factory=list)
+    bio: str | None = Field(None, max_length=2000)
+    date_of_birth: date | None = None
+    emergency_contact_name: str | None = Field(None, max_length=200)
+    emergency_contact_phone: str | None = Field(None, max_length=30)
+    preferred_roles: list[str] = Field(default_factory=list)
+    certifications: list[str] = Field(default_factory=list)
+    availability_notes: str | None = Field(None, max_length=1000)
 
 class NGOCreateReq(BaseModel):
     name:        str = Field(..., min_length=2, max_length=200)
@@ -80,6 +87,14 @@ class GoogleAuthReq(BaseModel):
     causes_supported: list[str] = Field(default_factory=list)
     education_level: str | None = Field(None, max_length=80)
     years_experience: int | None = Field(None, ge=0, le=80)
+    skills: list[str] = Field(default_factory=list)
+    bio: str | None = Field(None, max_length=2000)
+    date_of_birth: date | None = None
+    emergency_contact_name: str | None = Field(None, max_length=200)
+    emergency_contact_phone: str | None = Field(None, max_length=30)
+    preferred_roles: list[str] = Field(default_factory=list)
+    certifications: list[str] = Field(default_factory=list)
+    availability_notes: str | None = Field(None, max_length=1000)
 
 
 def _record_consent_events(user_id: str, req: SignupReq | GoogleAuthReq, db: AsyncSession) -> None:
@@ -124,7 +139,7 @@ async def signup(req: SignupReq, db: AsyncSession = Depends(get_db)):
         profile = VolunteerProfile(
             user_id=user.id,
             ngo_id=ngo.id,
-            skills=[],
+            skills=req.skills,
             availability={"mon": True, "tue": True, "wed": True, "thu": True, "fri": True, "sat": False, "sun": False},
             full_name=req.full_name,
             phone=req.phone,
@@ -134,6 +149,13 @@ async def signup(req: SignupReq, db: AsyncSession = Depends(get_db)):
             causes_supported=req.causes_supported,
             education_level=req.education_level,
             years_experience=req.years_experience,
+            bio=req.bio,
+            date_of_birth=req.date_of_birth,
+            emergency_contact_name=req.emergency_contact_name,
+            emergency_contact_phone=req.emergency_contact_phone,
+            preferred_roles=req.preferred_roles,
+            certifications=req.certifications,
+            availability_notes=req.availability_notes,
         )
         db.add(profile)
         _record_consent_events(user.id, req, db)
@@ -161,6 +183,55 @@ async def signup(req: SignupReq, db: AsyncSession = Depends(get_db)):
     await db.commit()
     token = create_token(user.id, "ngo_admin", None, req.email)
     return {"token": token, "role": "ngo_admin", "ngo_id": None, "needs_ngo_setup": True}
+
+
+@router.post("/guest", response_model=AuthResponse)
+async def guest_login(db: AsyncSession = Depends(get_db)):
+    """
+    Guest Mode (for Hackathon Admin)
+    Creates a temporary user and a temporary NGO to grant immediate full-platform access.
+    """
+    import uuid
+    unique_suffix = str(uuid.uuid4())[:8]
+    guest_email = f"guest_{unique_suffix}@synapseai.hackathon"
+    
+    # 1. Create the dummy NGO
+    ngo_code = _random_code()
+    from db.models import NGO, User
+    
+    # Needs a dummy user_id for created_by in NGO constraint, but User needs ngo_id
+    # We create user first with no ngo_id, then ngo, then update user.
+    user = User(
+        email=guest_email,
+        password_hash=hash_password("guest_password123"),
+        role="ngo_admin",
+        ngo_id=None,
+        full_name="Hackathon Guest",
+        phone="555-0000",
+        profile_completed_at=datetime.utcnow()
+    )
+    db.add(user)
+    await db.flush()
+    
+    ngo = NGO(
+        name=f"Guest NGO {unique_suffix}",
+        description="Auto-generated NGO for hackathon guest.",
+        invite_code=ngo_code,
+        created_by=user.id,
+        sector="Hackathon",
+    )
+    db.add(ngo)
+    await db.flush()
+    
+    user.ngo_id = ngo.id
+    
+    db.add(ConsentEvent(user_id=user.id, scope="analytics", granted=True, source="guest"))
+    db.add(ConsentEvent(user_id=user.id, scope="personalization", granted=True, source="guest"))
+    db.add(ConsentEvent(user_id=user.id, scope="ai_training", granted=True, source="guest"))
+    await db.commit()
+    
+    token = create_token(user.id, "ngo_admin", ngo.id, guest_email)
+    return {"token": token, "role": "ngo_admin", "ngo_id": ngo.id, "ngo_name": ngo.name}
 
 
 @router.post("/ngo/create", response_model=AuthResponse)
@@ -273,7 +344,7 @@ async def _google_auth_inner(req: GoogleAuthReq, db: AsyncSession):
             profile = VolunteerProfile(
                 user_id=user.id,
                 ngo_id=ngo.id,
-                skills=[],
+                skills=req.skills,
                 availability={"mon": True, "tue": True, "wed": True, "thu": True, "fri": True, "sat": False, "sun": False},
                 full_name=req.full_name,
                 phone=req.phone,
@@ -283,6 +354,13 @@ async def _google_auth_inner(req: GoogleAuthReq, db: AsyncSession):
                 causes_supported=req.causes_supported,
                 education_level=req.education_level,
                 years_experience=req.years_experience,
+                bio=req.bio,
+                date_of_birth=req.date_of_birth,
+                emergency_contact_name=req.emergency_contact_name,
+                emergency_contact_phone=req.emergency_contact_phone,
+                preferred_roles=req.preferred_roles,
+                certifications=req.certifications,
+                availability_notes=req.availability_notes,
             )
             db.add(profile)
             _record_consent_events(user.id, req, db)

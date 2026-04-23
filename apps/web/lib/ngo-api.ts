@@ -90,6 +90,14 @@ export const api = {
     causes_supported?: string[];
     education_level?: string;
     years_experience?: number;
+    skills?: string[];
+    bio?: string;
+    date_of_birth?: string;
+    emergency_contact_name?: string;
+    emergency_contact_phone?: string;
+    preferred_roles?: string[];
+    certifications?: string[];
+    availability_notes?: string;
   }): Promise<AuthResponse> =>
     fetch(`${BASE}/api/auth/signup`, {
       method: "POST",
