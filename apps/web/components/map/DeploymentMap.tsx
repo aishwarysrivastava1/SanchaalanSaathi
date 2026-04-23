@@ -277,7 +277,7 @@ export default function DeploymentMap() {
         const idx = prev.findIndex((v) => v.user_id === payload.volunteer_id);
         if (idx === -1) return prev;
         const next = [...prev];
-        next[idx] = { ...next[idx], lat: payload.lat, lng: payload.lng };
+        next[idx] = { ...next[idx], lat: payload.lat as number, lng: payload.lng as number };
         return next;
       });
       return;
