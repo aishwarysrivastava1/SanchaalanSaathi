@@ -351,7 +351,10 @@ export function ChatbotWidget() {
             try {
               const parsed = JSON.parse(dataStr);
               if (parsed.error) {
-                 completeText += `\\n\\n[Error: ${parsed.error}]`;
+                completeText = completeText || parsed.error;
+                setMessages(prev => prev.map(m =>
+                  m.id === botMsgId ? { ...m, text: parsed.error } : m
+                ));
               }
               if (parsed.textChunk) {
                 completeText += parsed.textChunk;

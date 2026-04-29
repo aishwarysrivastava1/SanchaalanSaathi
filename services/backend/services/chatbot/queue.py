@@ -18,12 +18,18 @@ class BackpressureManager:
         self.max_queue = max_queue
         self.max_per_user = max_per_user
         self.max_per_session = max_per_session
-        
+
         self.active_slots = 0
         self.queued_slots = 0
         self.user_counters: dict[str, int] = defaultdict(int)
         self.session_counters: dict[str, int] = defaultdict(int)
-        self._semaphore = asyncio.Semaphore(global_limit)
+        # Lazily created on first use so module import never touches the event loop
+        self._semaphore: asyncio.Semaphore | None = None
+
+    def _get_semaphore(self) -> asyncio.Semaphore:
+        if self._semaphore is None:
+            self._semaphore = asyncio.Semaphore(self.global_limit)
+        return self._semaphore
 
     async def acquire(self, user_id: str, session_id: str) -> None:
         """
@@ -44,7 +50,7 @@ class BackpressureManager:
 
         self.queued_slots += 1
         try:
-            await self._semaphore.acquire()
+            await self._get_semaphore().acquire()
             self.active_slots += 1
             self.user_counters[user_id] += 1
             self.session_counters[session_id] += 1
@@ -61,7 +67,7 @@ class BackpressureManager:
             
         if self.active_slots > 0:
             self.active_slots -= 1
-        self._semaphore.release()
+        self._get_semaphore().release()
 
 # Global Singleton Manager instance 
 queue_manager = BackpressureManager()

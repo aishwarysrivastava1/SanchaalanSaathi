@@ -23,6 +23,8 @@ async function handleGoogleSignIn(
   router: ReturnType<typeof useRouter>,
   setError: (e: string) => void,
   setBusy: (b: boolean) => void,
+  role: "ngo_admin" | "volunteer",
+  inviteCode?: string,
 ) {
   setError("");
   setBusy(true);
@@ -77,9 +79,12 @@ async function handleGoogleSignIn(
       setBusy(false);
     }
   } else {
-    // New user — send to registration form with Google identity pre-filled
+    // New user — route to role-specific registration page
     const params = new URLSearchParams({ mode: "google", email, uid, name });
-    window.location.href = `/register?${params.toString()}`;
+    if (role === "volunteer" && inviteCode) params.set("invite", inviteCode);
+    window.location.href = role === "ngo_admin"
+      ? `/register/ngo?${params.toString()}`
+      : `/register/volunteer?${params.toString()}`;
   }
 }
 
@@ -294,8 +299,8 @@ function LoginCard({ role, router, isDark }: { role: "ngo_admin" | "volunteer"; 
         ))}
       </div>
 
-      {/* Invite code */}
-      {!isNgo && (
+      {/* Invite code — signup only */}
+      {!isNgo && authMode === "signup" && (
         <div style={{ marginBottom: 18 }}>
           <label style={{ display: "block", color: isDark ? "rgba(255,255,255,0.55)" : "#6B7280", fontSize: 12, fontWeight: 600, marginBottom: 7, letterSpacing: "0.03em", textTransform: "uppercase" }}>
             Invite Code
@@ -368,7 +373,21 @@ function LoginCard({ role, router, isDark }: { role: "ngo_admin" | "volunteer"; 
 
       {/* Google button */}
       <motion.button
-        onClick={() => handleGoogleSignIn(router, setError, setBusy)}
+        onClick={() => {
+          if (!isNgo && authMode === "signup") {
+            if (!inviteCode.trim()) {
+              setError("Enter your NGO invite code to sign up.");
+              return;
+            }
+            if (!ngoName) {
+              setError("Invalid Invite Code — check with your NGO administrator.");
+              return;
+            }
+            handleGoogleSignIn(router, setError, setBusy, "volunteer", inviteCode);
+          } else {
+            handleGoogleSignIn(router, setError, setBusy, role);
+          }
+        }}
         disabled={busy}
         whileHover={{ scale: busy ? 1 : 1.015, boxShadow: busy ? undefined : "0 8px 24px rgba(0,0,0,0.2)" }}
         whileTap={{ scale: busy ? 1 : 0.975 }}
@@ -401,8 +420,8 @@ function LoginCard({ role, router, isDark }: { role: "ngo_admin" | "volunteer"; 
             ? "First time? You'll set up your NGO profile right after sign-in."
             : "Welcome back. Sign in to access your NGO dashboard."
           : authMode === "signup"
-            ? "New volunteer accounts require an invite code from your NGO admin."
-            : "Enter your invite code above, then sign in with Google."}
+            ? "Enter your invite code above to join an NGO, then sign up with Google."
+            : "Welcome back. Sign in to access your volunteer dashboard."}
       </p>
     </motion.div>
   );

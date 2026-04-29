@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from scipy.spatial.distance import cosine
@@ -10,18 +11,19 @@ logger = logging.getLogger(__name__)
 
 class EmbeddingProvider:
     """
-    Abstraction layer allowing fallback between Gemini and local SentenceTransformers.
+    Abstraction layer for text embeddings via Gemini.
+    genai.embed_content is synchronous — wrapped with asyncio.to_thread.
     """
     @staticmethod
     async def get_embedding(text: str) -> list[float]:
         try:
-            # Requires genai mapped asynchronously
-            result = await genai.embed_content_async(
+            result = await asyncio.to_thread(
+                genai.embed_content,
                 model="models/text-embedding-004",
                 content=text,
-                task_type="semantic_similarity"
+                task_type="semantic_similarity",
             )
-            return result['embedding']
+            return result["embedding"]
         except Exception as e:
             logger.error(f"Embedding generation failed: {e}")
             return []

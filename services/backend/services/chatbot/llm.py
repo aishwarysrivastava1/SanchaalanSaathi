@@ -13,8 +13,8 @@ class LLMOrchestrator:
     Manages Fallback cascading, exponential backoff, and robust generative API executions.
     """
     MAX_RETRIES = 3
-    PRIMARY_MODEL = 'gemini-2.5-pro'
-    FALLBACK_MODEL = 'gemini-2.5-flash'
+    PRIMARY_MODEL = 'gemini-2.5-flash-preview-04-17'
+    FALLBACK_MODEL = 'gemini-2.0-flash'
     
     @staticmethod
     async def generate_response_stream(formatted_history: list, content_parts: list, system_instruction: str):
