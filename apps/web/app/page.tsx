@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { signInWithGoogle as firebaseSignIn } from "@/lib/firebase-auth";
 import { api, friendlyError, googleAuthWithRetry } from "@/lib/ngo-api";
+import { enterGuestMode } from "@/lib/guest-mode";
 import { authErrorCode, authErrorMessage, isDismissedPopupError } from "@/lib/auth-errors";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -88,40 +89,14 @@ async function handleGoogleSignIn(
   }
 }
 
-async function handleGuestSignIn(
-  router: ReturnType<typeof useRouter>,
-  setError: (e: string) => void,
-  setBusy: (b: boolean) => void,
-) {
-  setError("");
-  setBusy(true);
-  try {
-    const data = await api.guestAuth();
-    localStorage.setItem("ngo_token", data.token);
-    document.cookie = `ngo_token=${data.token}; path=/; max-age=${60 * 60 * 24}; SameSite=Strict${location.protocol === "https:" ? "; Secure" : ""}`;
-    window.location.href = "/ngo/dashboard";
-  } catch (e: unknown) {
-    setError(friendlyError(e));
-    setBusy(false);
-  }
+function handleGuestSignIn() {
+  enterGuestMode("ngo_admin");
+  window.location.href = "/ngo/dashboard";
 }
 
-async function handleGuestVolunteerSignIn(
-  router: ReturnType<typeof useRouter>,
-  setError: (e: string) => void,
-  setBusy: (b: boolean) => void,
-) {
-  setError("");
-  setBusy(true);
-  try {
-    const data = await api.guestVolunteerAuth();
-    localStorage.setItem("ngo_token", data.token);
-    document.cookie = `ngo_token=${data.token}; path=/; max-age=${60 * 60 * 24}; SameSite=Strict${location.protocol === "https:" ? "; Secure" : ""}`;
-    window.location.href = "/vol/dashboard";
-  } catch (e: unknown) {
-    setError(friendlyError(e));
-    setBusy(false);
-  }
+function handleGuestVolunteerSignIn() {
+  enterGuestMode("volunteer");
+  window.location.href = "/vol/dashboard";
 }
 
 // ── Google icon ───────────────────────────────────────────────────────────────
@@ -280,8 +255,8 @@ function LoginCard({ role, router, isDark }: { role: "ngo_admin" | "volunteer"; 
 
       <button
         onClick={() => isNgo
-          ? handleGuestSignIn(router, setError, setBusy)
-          : handleGuestVolunteerSignIn(router, setError, setBusy)
+          ? handleGuestSignIn()
+          : handleGuestVolunteerSignIn()
         }
         disabled={busy}
         style={{

@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, ClipboardList, CheckCircle, Package, Clock, AlertCircle, Loader2, AlertTriangle, Zap, ClipboardCopy, Check } from "lucide-react";
+import { Users, ClipboardList, CheckCircle, Package, Clock, AlertCircle, Loader2, AlertTriangle, Zap, ClipboardCopy, Check, Star } from "lucide-react";
 import { motion } from "motion/react";
 import { api, friendlyError } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
+import { isGuestMode } from "../../../lib/guest-mode";
+import { GUEST_NGO_DASHBOARD, GUEST_NGO_ALERTS } from "../../../lib/guest-mock-data";
 
 type DashData = {
   total_volunteers: number;
@@ -54,6 +56,12 @@ export default function NGODashboardPage() {
 
   useEffect(() => {
     if (!user) return;
+    if (isGuestMode()) {
+      setData(GUEST_NGO_DASHBOARD as DashData);
+      setAlerts(GUEST_NGO_ALERTS);
+      setLoading(false);
+      return;
+    }
     Promise.all([
       api.ngoDashboard(user.token),
       api.ngoAlerts(user.token).catch(() => ({ alerts: [] })),
@@ -96,6 +104,14 @@ export default function NGODashboardPage() {
       transition={{ duration: 0.4 }}
       className="p-6 space-y-6"
     >
+      {/* Guest mode banner */}
+      {isGuestMode() && (
+        <div className="rounded-xl px-4 py-2.5 flex items-center gap-2 border border-amber-200 text-xs font-medium text-amber-700" style={{ background: "rgba(251,191,36,0.08)" }}>
+          <Star size={12} className="shrink-0" />
+          Demo Mode — Showing simulated data. No changes are saved to the database.
+        </div>
+      )}
+
       {/* Invite code banner */}
       {data?.invite_code && (
         <motion.div

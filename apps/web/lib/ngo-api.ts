@@ -1,4 +1,6 @@
 import type { AuthResponse, TaskResponse, VolunteerProfileResponse } from "./types";
+import { isGuestMode } from "./guest-mode";
+import { interceptGuestRequest } from "./guest-api-interceptor";
 
 const BASE = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000").replace(/\/$/, "");
 const DEFAULT_TIMEOUT = 30000;
@@ -141,10 +143,12 @@ export async function fetchSafe(url: string, init?: RequestInit, opts: { attempt
 }
 
 export async function ngoGet<T>(path: string, token: string): Promise<T> {
+  if (isGuestMode()) return interceptGuestRequest("GET", path) as T;
   return handleRes<T>(await fetchSafe(`${BASE}${path}`, { headers: authHeaders(token) }));
 }
 
 export async function ngoPost<T>(path: string, token: string, body?: unknown): Promise<T> {
+  if (isGuestMode()) return interceptGuestRequest("POST", path, body) as T;
   return handleRes<T>(await fetchSafe(`${BASE}${path}`, {
     method: "POST",
     headers: authHeaders(token),
@@ -153,6 +157,7 @@ export async function ngoPost<T>(path: string, token: string, body?: unknown): P
 }
 
 export async function ngoPut<T>(path: string, token: string, body: unknown): Promise<T> {
+  if (isGuestMode()) return interceptGuestRequest("PUT", path, body) as T;
   return handleRes<T>(await fetchSafe(`${BASE}${path}`, {
     method: "PUT",
     headers: authHeaders(token),
@@ -161,6 +166,7 @@ export async function ngoPut<T>(path: string, token: string, body: unknown): Pro
 }
 
 export async function ngoDelete<T>(path: string, token: string): Promise<T> {
+  if (isGuestMode()) return interceptGuestRequest("DELETE", path) as T;
   return handleRes<T>(await fetchSafe(`${BASE}${path}`, {
     method: "DELETE",
     headers: authHeaders(token),

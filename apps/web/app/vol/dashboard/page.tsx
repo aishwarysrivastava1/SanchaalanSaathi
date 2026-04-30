@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
 import { api, RecommendedTask, friendlyError } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
+import { isGuestMode } from "../../../lib/guest-mode";
+import { GUEST_VOL_DASHBOARD, GUEST_RECOMMENDATIONS } from "../../../lib/guest-mock-data";
 
 type Assignment = {
   id: string;
@@ -46,6 +48,12 @@ export default function VolDashboardPage() {
 
   const load = () => {
     if (!user) return;
+    if (isGuestMode()) {
+      setData(GUEST_VOL_DASHBOARD as DashData);
+      setRecs(GUEST_RECOMMENDATIONS);
+      setLoading(false);
+      return;
+    }
     Promise.all([
       api.volDashboard(user.token),
       api.getRecommendations(user.token).catch(() => []),
@@ -62,6 +70,15 @@ export default function VolDashboardPage() {
   }, [user, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const respond = async (id: string, action: "accept" | "reject") => {
+    if (isGuestMode()) {
+      setData(prev => prev ? {
+        ...prev,
+        assignments: prev.assignments.map(a =>
+          a.id === id ? { ...a, status: action === "accept" ? "accepted" : "rejected" } : a
+        ),
+      } : prev);
+      return;
+    }
     if (!user) return;
     setActing(id);
     try {
@@ -73,6 +90,15 @@ export default function VolDashboardPage() {
   };
 
   const complete = async (id: string) => {
+    if (isGuestMode()) {
+      setData(prev => prev ? {
+        ...prev,
+        assignments: prev.assignments.map(a =>
+          a.id === id ? { ...a, status: "completed" } : a
+        ),
+      } : prev);
+      return;
+    }
     if (!user) return;
     setCompleting(id);
     try {
@@ -102,6 +128,13 @@ export default function VolDashboardPage() {
       transition={{ duration: 0.4 }}
       className="p-6 space-y-6"
     >
+      {isGuestMode() && (
+        <div className="rounded-xl px-4 py-2.5 flex items-center gap-2 border border-amber-200 text-xs font-medium text-amber-700" style={{ background: "rgba(251,191,36,0.08)" }}>
+          <Star size={12} className="shrink-0" />
+          Demo Mode — Showing simulated data. No changes are saved to the database.
+        </div>
+      )}
+
       {error && (
         <div className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-red-300" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
           <AlertCircle size={14} /> {error}
