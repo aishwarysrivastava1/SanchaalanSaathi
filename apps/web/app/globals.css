@@ -65,17 +65,64 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* ── Global font-size scale-up ─────────────────────────── */
-.text-\[10px\]  { font-size: 0.75rem   !important; }
-.text-\[11px\]  { font-size: 0.8125rem !important; }
-.text-\[12px\]  { font-size: 0.875rem  !important; }
-.text-xs        { font-size: 0.875rem  !important; }
-.text-sm        { font-size: 1rem      !important; }
-.text-base      { font-size: 1.125rem  !important; }
-.text-lg        { font-size: 1.25rem   !important; }
-.text-xl        { font-size: 1.5rem    !important; }
-.text-2xl       { font-size: 1.75rem   !important; }
-.text-3xl       { font-size: 2.125rem  !important; }
+/* ── Type scale ─────────────────────────────────────────
+   Moved to `theme.extend.fontSize` in tailwind.config.ts.
+
+   It lived here as ten `!important` overrides of Tailwind's own utilities,
+   so `text-xs` silently rendered at `text-sm` and no component could ever
+   set its own size. Same rendering now, but overridable.
+
+   The three legacy arbitrary sizes below are kept because pages still use
+   them; they floor at 12px so nothing renders at an unreadable 10px. */
+.text-\[10px\] { font-size: 0.75rem; }
+.text-\[11px\] { font-size: 0.8125rem; }
+.text-\[12px\] { font-size: 0.875rem; }
+
+/* ── Keyboard focus ─────────────────────────────────────
+   There was previously no focus style anywhere in this app, so anyone
+   navigating by keyboard had no idea where they were. WCAG 2.4.7. */
+:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+/* Pointer users keep a clean UI; only keyboard focus draws a ring. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── Skip to content ────────────────────────────────────
+   First tab stop on every page. Off-screen until focused, so a keyboard user
+   can jump past the sidebar instead of tabbing through every nav item. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 9999;
+  padding: 0.75rem 1.25rem;
+  background: var(--brand-primary);
+  color: #ffffff;
+  border-radius: 0 0 6px 0;
+  font-weight: 600;
+}
+.skip-link:focus {
+  left: 0;
+}
+
+/* ── Reduced motion ─────────────────────────────────────
+   This app runs several infinite animations (glow-pulse, float, shimmer,
+   swing). For users with vestibular disorders those are not decoration,
+   they are a barrier. WCAG 2.3.3. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 /* ── text-white/* — dark-readable in light mode ─────── */
 /* These classes assume a dark bg; make them visible on white too */

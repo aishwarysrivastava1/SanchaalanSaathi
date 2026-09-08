@@ -15,7 +15,7 @@ import { authErrorCode, authErrorMessage, isDismissedPopupError } from "@/lib/au
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ChatbotWidget } from "@/components/ui/ChatbotWidget";
-import { setToken } from "@/lib/token-manager";
+import { setTokens } from "@/lib/token-manager";
 
 const BACKEND = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000").replace(/\/$/, "");
 
@@ -75,7 +75,7 @@ async function handleGoogleSignIn(
         { email, firebase_uid: uid, role: role as "ngo_admin" | "volunteer" },
         { attempts: 3, timeoutMs: 30000 },
       );
-      setToken(data.token);
+      setTokens(data.token, data.refresh_token);
       if (data.needs_ngo_setup) window.location.href = "/ngo/setup";
       else if (data.role === "ngo_admin") window.location.href = "/ngo/dashboard";
       else window.location.href = "/vol/dashboard";

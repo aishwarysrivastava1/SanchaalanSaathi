@@ -1,13 +1,8 @@
 import {
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult,
   GoogleAuthProvider,
-  signOut,
-  onAuthStateChanged,
-  getIdToken,
   type User,
-  type Unsubscribe,
 } from "firebase/auth";
 import { auth } from "./firebase";
 
@@ -60,43 +55,5 @@ export async function signInWithGoogle(): Promise<User> {
     throw err;
   } finally {
     _popupInFlight = false;
-  }
-}
-
-export async function consumeRedirectSignInResult(): Promise<User | null> {
-  if (!auth) return null;
-  try {
-    const result = await getRedirectResult(auth);
-    return result?.user ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export async function logoutUser(): Promise<void> {
-  if (auth) await signOut(auth);
-  try {
-    localStorage.removeItem("ngo_token");
-    document.cookie = "ngo_token=; path=/; max-age=0";
-  } catch {
-    // SSR — no localStorage
-  }
-}
-
-export function observeAuthState(cb: (user: User | null) => void): Unsubscribe {
-  if (!auth) return () => {};
-  return onAuthStateChanged(auth, cb);
-}
-
-export async function getCurrentIdToken(): Promise<string | null> {
-  if (!auth?.currentUser) return null;
-  try {
-    return await getIdToken(auth.currentUser);
-  } catch {
-    try {
-      return await getIdToken(auth.currentUser, true);
-    } catch {
-      return null;
-    }
   }
 }

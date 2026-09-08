@@ -127,7 +127,7 @@ export default function NGOProfilePage() {
       {/* Sign out */}
       <button
         onClick={handleLogout}
-        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 hover:text-red-300 transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
         style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}
       >
         <LogOut size={15} />

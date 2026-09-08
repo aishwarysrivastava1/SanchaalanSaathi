@@ -6,7 +6,7 @@ import { Building2, Loader2, ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import { api, friendlyError } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
-import { setToken } from "../../../lib/token-manager";
+import { setTokens } from "../../../lib/token-manager";
 
 export default function NGOSetupPage() {
   const router = useRouter();
@@ -23,7 +23,7 @@ export default function NGOSetupPage() {
     setLoading(true);
     try {
       const res = await api.createNGO(user.token, { name, description: desc });
-      setToken(res.token);
+      setTokens(res.token, res.refresh_token);
       try {
         const p = JSON.parse(atob(res.token.split(".")[1]));
         setUser({ ...user, ngo_id: p.ngo_id, token: res.token, needs_ngo_setup: false });

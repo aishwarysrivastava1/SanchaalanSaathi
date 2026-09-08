@@ -1,0 +1,19 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Migrations run once, before the new container takes traffic. This MUST point
+# at the direct Postgres connection (port 5432), not the transaction pooler on
+# 6543 -- pgBouncer in transaction mode cannot run DDL reliably.
+# See docs/DEPLOYMENT.md, step 6.
+preDeployCommand = "alembic upgrade head"
+
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+
+# Railway starts the new container, waits for the healthcheck to pass, shifts
+# traffic, and only then stops the old one. That, plus the graceful-shutdown
+# window in the Dockerfile, is what makes deploys zero-downtime.
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

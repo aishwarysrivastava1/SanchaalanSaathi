@@ -1,90 +1,33 @@
-const isProd = process.env.NODE_ENV === "production";
+/** Fails the deploy loudly rather than shipping a build that 404s every API call. */
 
-const REQUIRED_PUBLIC_VARS = [
+const REQUIRED = [
   "NEXT_PUBLIC_BACKEND_URL",
   "NEXT_PUBLIC_FIREBASE_API_KEY",
   "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
   "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-  "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
 ] as const;
 
-const REQUIRED_SERVER_VARS = [
-  "FIREBASE_SERVICE_ACCOUNT_JSON",
-  "GEM_KEY",
-] as const;
-
-function validateUrl(name: string, value: string) {
+function assertHttpsUrl(name: string, value: string): void {
+  let parsed: URL;
   try {
-    const parsed = new URL(value);
-    if (parsed.protocol !== "https:" && !parsed.hostname.includes("localhost")) {
-      throw new Error(`${name} must use https in production unless targeting localhost`);
-    }
+    parsed = new URL(value);
   } catch {
-    throw new Error(`${name} must be a valid absolute URL`);
+    throw new Error(`[env] ${name} must be a valid absolute URL`);
+  }
+  if (parsed.protocol !== "https:" && !parsed.hostname.includes("localhost")) {
+    throw new Error(`[env] ${name} must use https unless targeting localhost`);
   }
 }
 
-function listMissing(keys: readonly string[]) {
-  return keys.filter((key) => !process.env[key] || String(process.env[key]).trim().length === 0);
-}
+export function validateProductionEnv(): void {
+  if (process.env.NEXT_PHASE === "phase-production-build") return;
+  if (process.env.NODE_ENV !== "production") return;
+  if (process.env.VERCEL !== "1" && process.env.ENFORCE_ENV_VALIDATION !== "1") return;
 
-function parseJsonFromEnv(rawValue: string) {
-  const trimmed = rawValue.trim();
-  const normalized = trimmed.replace(/^['\"]|['\"]$/g, '');
-  const candidates = [
-    trimmed,
-    normalized,
-    normalized.replace(/\\\"/g, '"').replace(/\\n/g, '\n'),
-  ];
-
-  for (const candidate of candidates) {
-    try {
-      return JSON.parse(candidate);
-    } catch {
-      // try next candidate
-    }
-  }
-
-  return null;
-}
-
-export function validateProductionEnv() {
-  if (process.env.NEXT_PHASE === 'phase-production-build') return;
-  const shouldEnforce = process.env.VERCEL === '1' || process.env.ENFORCE_ENV_VALIDATION === '1';
-  if (!shouldEnforce) return;
-  if (!isProd) return;
-
-  const missing = [
-    ...listMissing(REQUIRED_PUBLIC_VARS),
-    ...listMissing(REQUIRED_SERVER_VARS),
-  ];
-
+  const missing = REQUIRED.filter((key) => !process.env[key]?.trim());
   if (missing.length > 0) {
-    throw new Error(
-      `[env] Missing required production env vars: ${missing.join(", ")}`
-    );
+    throw new Error(`[env] Missing required production env vars: ${missing.join(", ")}`);
   }
 
-  validateUrl("NEXT_PUBLIC_BACKEND_URL", String(process.env.NEXT_PUBLIC_BACKEND_URL));
-
-  const serviceAccount = parseJsonFromEnv(String(process.env.FIREBASE_SERVICE_ACCOUNT_JSON));
-  if (!serviceAccount) {
-    throw new Error("[env] FIREBASE_SERVICE_ACCOUNT_JSON must be valid JSON");
-  }
-
-  const requiredServiceAccountFields = [
-    'project_id',
-    'client_email',
-    'private_key',
-  ];
-
-  const missingServiceAccountFields = requiredServiceAccountFields.filter(
-    (field) => !serviceAccount[field] || String(serviceAccount[field]).trim().length === 0
-  );
-
-  if (missingServiceAccountFields.length > 0) {
-    throw new Error(
-      `[env] FIREBASE_SERVICE_ACCOUNT_JSON missing required fields: ${missingServiceAccountFields.join(', ')}`
-    );
-  }
+  assertHttpsUrl("NEXT_PUBLIC_BACKEND_URL", String(process.env.NEXT_PUBLIC_BACKEND_URL));
 }

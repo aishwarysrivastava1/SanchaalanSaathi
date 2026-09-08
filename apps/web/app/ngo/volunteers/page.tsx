@@ -164,7 +164,7 @@ export default function VolunteersPage() {
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="p-6 space-y-5">
 
       {error && (
-        <div className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-red-300" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
+        <div className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-red-700 dark:text-red-300" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
           <AlertCircle size={14} /> {error}
         </div>
       )}

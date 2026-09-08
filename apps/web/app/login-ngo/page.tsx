@@ -104,7 +104,7 @@ function LoginForm() {
             <AnimatePresence>
               {error && (
                 <motion.p key="err" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="text-xs text-red-300 rounded-lg px-3 py-2"
+                  className="text-xs text-red-700 dark:text-red-300 rounded-lg px-3 py-2"
                   style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.25)" }}>
                   {error}
                 </motion.p>

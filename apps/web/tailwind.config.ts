@@ -10,6 +10,24 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // The type scale lives here, not in globals.css.
+      //
+      // These sizes used to be imposed by a block of `!important` rules that
+      // redefined Tailwind's own utilities (`.text-xs { font-size: .875rem
+      // !important }` and so on). That made every size unpredictable and
+      // impossible to override locally -- `text-xs` silently rendered at
+      // `text-sm`, and no component could opt out. Declaring the scale as a
+      // design token renders identically with no specificity war, and
+      // arbitrary values like `text-[13px]` work again.
+      fontSize: {
+        xs: ["0.875rem", { lineHeight: "1.25rem" }],
+        sm: ["1rem", { lineHeight: "1.5rem" }],
+        base: ["1.125rem", { lineHeight: "1.75rem" }],
+        lg: ["1.25rem", { lineHeight: "1.75rem" }],
+        xl: ["1.5rem", { lineHeight: "2rem" }],
+        "2xl": ["1.75rem", { lineHeight: "2.25rem" }],
+        "3xl": ["2.125rem", { lineHeight: "2.5rem" }],
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",

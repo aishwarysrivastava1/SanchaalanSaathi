@@ -1,330 +1,344 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { ClipboardList, CheckCircle, Clock, AlertCircle, Loader2, CheckCheck, XCircle, Sparkles, Star } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, RecommendedTask, friendlyError } from "../../../lib/ngo-api";
+import {
+  CheckCheck,
+  CheckCircle,
+  ClipboardList,
+  Clock,
+  Sparkles,
+  Star,
+  XCircle,
+} from "lucide-react";
+import { motion } from "motion/react";
+
+import { api, friendlyError, RecommendedTask } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
 import { isGuestMode } from "../../../lib/guest-mode";
-import { GUEST_VOL_DASHBOARD, GUEST_RECOMMENDATIONS } from "../../../lib/guest-mock-data";
+import { GUEST_RECOMMENDATIONS, GUEST_VOL_DASHBOARD } from "../../../lib/guest-mock-data";
+import {
+  Badge,
+  Button,
+  Card,
+  CardHeader,
+  EmptyState,
+  ErrorState,
+  LoadingCard,
+  PageHeader,
+  PRIORITY_TONES,
+  StatTile,
+  StatusBadge,
+} from "../../../components/ui/primitives";
 
-type Assignment = {
-  id: string;
-  task_title: string;
-  task_description: string;
-  required_skills: string[];
-  status: "assigned" | "accepted" | "rejected" | "completed";
-  deadline?: string;
-  assigned_at: string;
-};
-
+/** Shape returned by /api/volunteer/dashboard — counts, not a task list. */
 type DashData = {
-  assigned_tasks: number;
+  active_assignments: number;
   completed_tasks: number;
-  upcoming_deadlines: { title: string; deadline: string }[];
-  assignments: Assignment[];
+  unread_notifications: number;
+  upcoming_deadlines: { task_id: string; title: string; deadline?: string }[];
 };
 
-const STATUS_META: Record<string, { color: string; label: string; borderColor: string }> = {
-  assigned:  { color: "bg-teal-50 text-teal-700 border-teal-200",         label: "Pending",  borderColor: "#2dd4bf"  },
-  accepted:  { color: "bg-blue-50 text-blue-700 border-blue-200",         label: "Accepted", borderColor: "#60a5fa"  },
-  rejected:  { color: "bg-red-50 text-red-600 border-red-200",            label: "Rejected", borderColor: "#f87171"  },
-  completed: { color: "bg-emerald-50 text-emerald-700 border-emerald-200", label: "Done",    borderColor: "#34d399"  },
+/** Shape returned by /api/volunteer/tasks. */
+type VolTask = {
+  assignment_id: string;
+  task_id: string;
+  title: string;
+  description?: string;
+  required_skills?: string[];
+  priority?: string;
+  assignment_status: string;
+  deadline?: string;
 };
 
-const STAT_ICONS = [ClipboardList, CheckCircle, Clock];
-const STAT_LABELS = ["Assigned Tasks", "Completed", "Upcoming Deadlines"];
+const ACTIVE = new Set(["assigned", "accepted"]);
 
 export default function VolDashboardPage() {
   const { user, loading: authLoading } = useNGOAuth();
   const router = useRouter();
-  const [data, setData]         = useState<DashData | null>(null);
-  const [recs, setRecs]         = useState<RecommendedTask[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState("");
-  const [acting, setActing]     = useState<string | null>(null);
-  const [completing, setCompleting] = useState<string | null>(null);
 
-  const load = () => {
+  const [data, setData] = useState<DashData | null>(null);
+  const [tasks, setTasks] = useState<VolTask[]>([]);
+  const [recs, setRecs] = useState<RecommendedTask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = useCallback(() => {
     if (!user) return;
     if (isGuestMode()) {
-      setData(GUEST_VOL_DASHBOARD as DashData);
+      setData(GUEST_VOL_DASHBOARD as unknown as DashData);
+      setTasks(((GUEST_VOL_DASHBOARD as any).assignments ?? []) as VolTask[]);
       setRecs(GUEST_RECOMMENDATIONS);
       setLoading(false);
       return;
     }
+    setLoading(true);
+    setError("");
     Promise.all([
       api.volDashboard(user.token),
+      // The dashboard endpoint returns counts only, so the actionable list
+      // comes from the tasks endpoint.
+      api.volTasks(user.token).catch(() => []),
       api.getRecommendations(user.token).catch(() => []),
     ])
-      .then(([d, r]) => { setData(d as DashData); setRecs(r as RecommendedTask[]); })
+      .then(([dashboard, volTasks, recommendations]) => {
+        setData(dashboard as DashData);
+        setTasks(volTasks as VolTask[]);
+        setRecs(recommendations as RecommendedTask[]);
+      })
       .catch((e) => setError(friendlyError(e)))
       .finally(() => setLoading(false));
-  };
+  }, [user]);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) { router.replace("/"); return; }
+    if (!user) {
+      router.replace("/");
+      return;
+    }
     load();
-  }, [user, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, authLoading, router, load]);
 
-  const respond = async (id: string, action: "accept" | "reject") => {
+  const act = async (assignmentId: string, action: "accept" | "reject" | "complete") => {
     if (isGuestMode()) {
-      setData(prev => prev ? {
-        ...prev,
-        assignments: prev.assignments.map(a =>
-          a.id === id ? { ...a, status: action === "accept" ? "accepted" : "rejected" } : a
-        ),
-      } : prev);
+      const next =
+        action === "accept" ? "accepted" : action === "reject" ? "rejected" : "completed";
+      setTasks((prev) =>
+        prev.map((t) => (t.assignment_id === assignmentId ? { ...t, assignment_status: next } : t)),
+      );
       return;
     }
     if (!user) return;
-    setActing(id);
-    try {
-      if (action === "accept") await api.acceptAssignment(user.token, id);
-      else                     await api.rejectAssignment(user.token, id);
-      load();
-    } catch (e: any) { setError(friendlyError(e)); }
-    finally { setActing(null); }
-  };
 
-  const complete = async (id: string) => {
-    if (isGuestMode()) {
-      setData(prev => prev ? {
-        ...prev,
-        assignments: prev.assignments.map(a =>
-          a.id === id ? { ...a, status: "completed" } : a
-        ),
-      } : prev);
-      return;
+    setBusy(assignmentId);
+    try {
+      if (action === "accept") await api.acceptAssignment(user.token, assignmentId);
+      else if (action === "reject") await api.rejectAssignment(user.token, assignmentId);
+      else await api.completeAssignment(user.token, assignmentId);
+      load();
+    } catch (e) {
+      setError(friendlyError(e));
+    } finally {
+      setBusy(null);
     }
-    if (!user) return;
-    setCompleting(id);
-    try {
-      await api.completeAssignment(user.token, id);
-      load();
-    } catch (e: any) { setError(friendlyError(e)); }
-    finally { setCompleting(null); }
   };
 
-  if (authLoading || loading) return (
-    <div className="flex items-center justify-center h-64">
-      <Loader2 size={22} className="animate-spin text-[#48A15E]" />
-    </div>
-  );
+  if (authLoading || loading) {
+    return (
+      <div className="p-6">
+        <PageHeader title="My dashboard" description="Your assignments and what is coming up." />
+        <div className="grid gap-4 sm:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <LoadingCard key={i} lines={1} />
+          ))}
+        </div>
+        <div className="mt-6">
+          <LoadingCard lines={5} />
+        </div>
+      </div>
+    );
+  }
+
   if (!user) return null;
 
-  const statValues = [
-    data?.assigned_tasks ?? 0,
-    data?.completed_tasks ?? 0,
-    data?.upcoming_deadlines?.length ?? 0,
-  ];
+  const active = tasks.filter((t) => ACTIVE.has(t.assignment_status));
+  const deadlines = data?.upcoming_deadlines ?? [];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="p-6 space-y-6"
+      transition={{ duration: 0.3 }}
+      className="p-6"
     >
+      <PageHeader
+        title="My dashboard"
+        description="Your assignments and what is coming up."
+        action={
+          <Button variant="secondary" onClick={() => router.push("/vol/all-tasks")}>
+            Browse open tasks
+          </Button>
+        }
+      />
+
       {isGuestMode() && (
-        <div className="rounded-xl px-4 py-2.5 flex items-center gap-2 border border-amber-200 text-xs font-medium text-amber-700" style={{ background: "rgba(251,191,36,0.08)" }}>
-          <Star size={12} className="shrink-0" />
-          Demo Mode — Showing simulated data. No changes are saved to the database.
-        </div>
+        <Card className="mb-4 flex items-center gap-2 border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <Star size={14} className="shrink-0" />
+          Demo mode — showing simulated data. Nothing is saved.
+        </Card>
       )}
 
       {error && (
-        <div className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-red-300" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
-          <AlertCircle size={14} /> {error}
-        </div>
+        <Card className="mb-4">
+          <ErrorState message={error} onRetry={load} />
+        </Card>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {STAT_LABELS.map((label, i) => {
-          const Icon = STAT_ICONS[i];
-          return (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07 }}
-              whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(42,130,86,0.18)", borderColor: "#95C78F" }}
-              className="rounded-2xl border border-gray-200 p-4 flex flex-col gap-2 cursor-default"
-              style={{ background: "var(--card-bg)", borderColor: "var(--card-border)" }}
-            >
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center"
-                style={{ background: "linear-gradient(135deg, #2A8256 0%, #48A15E 100%)" }}
-              >
-                <Icon size={14} className="text-white" />
-              </div>
-              <p className="text-lg sm:text-xl font-bold text-gray-800">{statValues[i]}</p>
-              <p className="text-[10px] text-gray-400 leading-tight">{label}</p>
-            </motion.div>
-          );
-        })}
-      </div>
+      <section aria-label="Key numbers" className="grid gap-4 sm:grid-cols-3">
+        <StatTile
+          label="Active assignments"
+          value={data?.active_assignments ?? 0}
+          icon={<ClipboardList size={16} />}
+        />
+        <StatTile
+          label="Completed"
+          value={data?.completed_tasks ?? 0}
+          icon={<CheckCircle size={16} />}
+        />
+        <StatTile
+          label="Upcoming deadlines"
+          value={deadlines.length}
+          hint={data?.unread_notifications ? `${data.unread_notifications} unread` : undefined}
+          tone={data?.unread_notifications ? "info" : "neutral"}
+          icon={<Clock size={16} />}
+        />
+      </section>
 
-      {/* AI Recommendations */}
-      {recs.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles size={13} className="text-[#48A15E]" />
-            <h2 className="text-sm font-semibold text-white/80">Recommended for You</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {recs.slice(0, 3).map((r, i) => (
-              <motion.div
-                key={r.task_id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06 }}
-                whileHover={{ y: -3, boxShadow: "0 12px 28px rgba(42,130,86,0.18)", borderColor: "#95C78F" }}
-                className="rounded-2xl border border-gray-200 p-4 flex flex-col gap-2"
-                style={{ background: "var(--card-bg)", borderColor: "var(--card-border)" }}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-xs font-semibold text-gray-800 line-clamp-2 flex-1">{r.title}</p>
-                  <span className="text-[10px] font-bold text-[#2A8256] shrink-0">{Math.round(r.match_score * 100)}%</span>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {r.matched_skills.map((s) => (
-                    <span key={s} className="text-[10px] text-[#2A8256] border border-[#2A8256]/20 rounded-full px-1.5 py-0.5" style={{ background: "rgba(42,130,86,0.08)" }}>{s}</span>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between mt-auto pt-1">
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${r.priority === "high" ? "bg-red-50 text-red-600 border-red-200" : r.priority === "medium" ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-gray-50 text-gray-400 border-gray-200"}`}>
-                    {r.priority}
-                  </span>
-                  {r.deadline && <p className="text-[10px] text-gray-400">Due {new Date(r.deadline).toLocaleDateString()}</p>}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Upcoming deadlines */}
-      {(data?.upcoming_deadlines ?? []).length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-amber-200 p-4"
-          style={{ background: "rgba(251,191,36,0.06)" }}
-        >
-          <p className="text-xs font-semibold text-amber-800 mb-2">Upcoming Deadlines</p>
-          <div className="space-y-1.5">
-            {data!.upcoming_deadlines.map((d, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <p className="text-xs text-amber-700 truncate">{d.title}</p>
-                <p className="text-xs text-amber-600 font-mono shrink-0 ml-3">{new Date(d.deadline).toLocaleDateString()}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Assignments */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">My Assignments</h2>
-        {(!data?.assignments || data.assignments.length === 0) ? (
-          <motion.div
-            whileHover={{ y: -2, borderColor: "#95C78F" }}
-            className="rounded-2xl border border-gray-200 p-8 text-center text-sm text-gray-400"
-            style={{ background: "var(--card-bg)", borderColor: "var(--card-border)" }}
-          >
-            No assignments yet. Your NGO coordinator will assign tasks to you.
-          </motion.div>
+      <Card className="mt-6">
+        <CardHeader
+          title="Your assignments"
+          description="Accept what you can take on, then mark it done when finished."
+        />
+        {active.length === 0 ? (
+          <EmptyState
+            title="Nothing assigned right now"
+            description="Browse the open tasks and pick up something that matches your skills."
+            icon={<ClipboardList size={28} />}
+            action={<Button onClick={() => router.push("/vol/all-tasks")}>Browse open tasks</Button>}
+          />
         ) : (
-          <div className="space-y-3">
-            <AnimatePresence>
-              {data.assignments.map((a, i) => {
-                const meta = STATUS_META[a.status] ?? STATUS_META.assigned;
-                return (
-                  <motion.div
-                    key={a.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    whileHover={{ y: -3, boxShadow: "0 16px 36px rgba(42,130,86,0.15)", borderColor: "#95C78F" }}
-                    className="rounded-2xl border border-gray-200 overflow-hidden"
-                    style={{
-                      background: "var(--card-bg)",
-                      borderLeft: `4px solid ${meta.borderColor}`,
-                    }}
-                  >
-                    <div className="px-5 py-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-semibold text-gray-800 text-sm">{a.task_title}</h3>
-                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${meta.color}`}>
-                              {meta.label}
-                            </span>
-                          </div>
-                          {a.task_description && (
-                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{a.task_description}</p>
-                          )}
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {(a.required_skills ?? []).map((s) => (
-                              <span key={s} className="text-[10px] text-[#2A8256] border border-[#2A8256]/20 rounded-full px-2 py-0.5" style={{ background: "rgba(42,130,86,0.08)" }}>{s}</span>
-                            ))}
-                          </div>
-                          {a.deadline && (
-                            <p className="text-[11px] text-gray-400 mt-1.5">Due: {new Date(a.deadline).toLocaleDateString()}</p>
-                          )}
-                        </div>
+          <ul className="divide-y divide-gray-100 dark:divide-white/5">
+            {active.map((task) => (
+              <li key={task.assignment_id} className="flex flex-wrap gap-4 px-5 py-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{task.title}</p>
+                    <StatusBadge value={task.assignment_status} />
+                    {task.priority && (
+                      <Badge tone={PRIORITY_TONES[task.priority] ?? "neutral"}>
+                        {task.priority}
+                      </Badge>
+                    )}
+                  </div>
+                  {task.description && (
+                    <p className="mt-1 line-clamp-2 text-sm text-gray-500 dark:text-white/50">
+                      {task.description}
+                    </p>
+                  )}
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-white/45">
+                    {task.deadline && (
+                      <span className="inline-flex items-center gap-1">
+                        <Clock size={12} />
+                        Due {new Date(task.deadline).toLocaleDateString()}
+                      </span>
+                    )}
+                    {(task.required_skills ?? []).length > 0 && (
+                      <span>{task.required_skills!.join(", ")}</span>
+                    )}
+                  </div>
+                </div>
 
-                        {a.status === "assigned" && (
-                          <div className="flex gap-2 shrink-0">
-                            <motion.button
-                              onClick={() => respond(a.id, "accept")}
-                              disabled={acting === a.id}
-                              whileHover={{ scale: 1.04 }}
-                              whileTap={{ scale: 0.95 }}
-                              className="flex items-center gap-1 text-xs text-white rounded-lg px-3 py-1.5 font-semibold disabled:opacity-50"
-                              style={{ background: "linear-gradient(135deg, #2A8256 0%, #48A15E 100%)" }}
-                            >
-                              {acting === a.id ? <Loader2 size={11} className="animate-spin" /> : <CheckCheck size={11} />}
-                              Accept
-                            </motion.button>
-                            <motion.button
-                              onClick={() => respond(a.id, "reject")}
-                              disabled={acting === a.id}
-                              whileHover={{ scale: 1.04 }}
-                              whileTap={{ scale: 0.95 }}
-                              className="flex items-center gap-1 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded-lg px-3 py-1.5 font-semibold transition-all disabled:opacity-50"
-                            >
-                              <XCircle size={11} />
-                              Reject
-                            </motion.button>
-                          </div>
-                        )}
-                        {a.status === "accepted" && (
-                          <motion.button
-                            onClick={() => complete(a.id)}
-                            disabled={completing === a.id}
-                            whileHover={{ scale: 1.04 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="flex items-center gap-1 text-xs text-white rounded-lg px-3 py-1.5 font-semibold disabled:opacity-50 shrink-0"
-                            style={{ background: "linear-gradient(135deg, #1a5e52 0%, #2A8256 100%)" }}
-                          >
-                            {completing === a.id ? <Loader2 size={11} className="animate-spin" /> : <Star size={11} />}
-                            Complete
-                          </motion.button>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </div>
+                <div className="flex shrink-0 items-start gap-2">
+                  {task.assignment_status === "assigned" ? (
+                    <>
+                      <Button
+                        loading={busy === task.assignment_id}
+                        onClick={() => act(task.assignment_id, "accept")}
+                      >
+                        <CheckCheck size={14} />
+                        Accept
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        disabled={busy === task.assignment_id}
+                        onClick={() => act(task.assignment_id, "reject")}
+                      >
+                        <XCircle size={14} />
+                        Decline
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      loading={busy === task.assignment_id}
+                      onClick={() => act(task.assignment_id, "complete")}
+                    >
+                      <CheckCircle size={14} />
+                      Mark done
+                    </Button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
-      </div>
+      </Card>
+
+      {deadlines.length > 0 && (
+        <Card className="mt-4">
+          <CardHeader title="Upcoming deadlines" description="Soonest first." />
+          <ul className="divide-y divide-gray-100 dark:divide-white/5">
+            {deadlines.map((item) => (
+              <li
+                key={item.task_id}
+                className="flex items-center justify-between gap-4 px-5 py-3 text-sm"
+              >
+                <span className="truncate text-gray-900 dark:text-gray-100">{item.title}</span>
+                <span className="shrink-0 text-gray-500 dark:text-white/50">
+                  {item.deadline ? new Date(item.deadline).toLocaleDateString() : "—"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <Card className="mt-4">
+        <CardHeader
+          title="Recommended for you"
+          description="Ranked by how well each task matches your skills."
+          action={
+            <Button variant="ghost" onClick={() => router.push("/vol/all-tasks")}>
+              See all
+            </Button>
+          }
+        />
+        {recs.length === 0 ? (
+          <EmptyState
+            title="No recommendations yet"
+            description="Add skills to your profile and we will match you to suitable tasks."
+            icon={<Sparkles size={28} />}
+            action={
+              <Button variant="secondary" onClick={() => router.push("/vol/profile")}>
+                Update profile
+              </Button>
+            }
+          />
+        ) : (
+          <ul className="divide-y divide-gray-100 dark:divide-white/5">
+            {recs.slice(0, 5).map((rec) => (
+              <li
+                key={rec.task_id}
+                className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-gray-900 dark:text-gray-100">
+                    {rec.title}
+                  </p>
+                  {(rec.matched_skills ?? []).length > 0 && (
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-white/45">
+                      Matches: {rec.matched_skills!.join(", ")}
+                    </p>
+                  )}
+                </div>
+                <Badge tone={rec.match_score >= 0.6 ? "success" : "info"}>
+                  {Math.round(rec.match_score * 100)}% match
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
     </motion.div>
   );
 }

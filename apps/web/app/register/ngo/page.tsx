@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { api, friendlyError } from "../../../lib/ngo-api";
 import { NGOAuthProvider, useNGOAuth } from "../../../lib/ngo-auth";
 import { enterGuestMode } from "../../../lib/guest-mode";
-import { setToken } from "../../../lib/token-manager";
+import { setTokens } from "../../../lib/token-manager";
 import {
   Building2, Eye, EyeOff, Loader2, ChevronDown, X,
   User, Phone, Globe, Shield, CheckCircle2, ArrowRight, MapPin, Star,
@@ -178,8 +178,8 @@ function NGORegisterForm() {
   const inputCls = "w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 outline-none";
   const inputSty = { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" };
 
-  const finalize = (token: string, emailUsed: string) => {
-    setToken(token);
+  const finalize = (token: string, emailUsed: string, refreshToken?: string | null) => {
+    setTokens(token, refreshToken);
     const p = JSON.parse(atob(token.split(".")[1]));
     setUser({ user_id: p.sub, role: "ngo_admin", ngo_id: p.ngo_id, email: emailUsed, token });
     setSuccess(true);
@@ -204,7 +204,7 @@ function NGORegisterForm() {
           primary_contact_phone: pcPhone || phone || undefined,
           operating_regions: ngoRegions, mission_focus: ngoMission,
         });
-        finalize(ngo.token, googleEmail);
+        finalize(ngo.token, googleEmail, ngo.refresh_token);
       } else {
         const signup = await api.signup({
           email, password, role: "ngo_admin",
@@ -219,7 +219,7 @@ function NGORegisterForm() {
           primary_contact_phone: pcPhone || phone || undefined,
           operating_regions: ngoRegions, mission_focus: ngoMission,
         });
-        finalize(ngo.token, email);
+        finalize(ngo.token, email, ngo.refresh_token);
       }
     } catch (err: unknown) {
       setError(friendlyError(err));
@@ -437,7 +437,7 @@ function NGORegisterForm() {
           <AnimatePresence>
             {error && (
               <motion.div key="err" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="rounded-xl px-4 py-3 text-sm text-red-300"
+                className="rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-300"
                 style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
                 {error}
               </motion.div>

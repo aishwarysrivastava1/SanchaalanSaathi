@@ -1,6 +1,19 @@
-import type { AuthResponse, TaskResponse, VolunteerProfileResponse } from "./types";
+import type {
+  AnalyticsOverview,
+  AuthResponse,
+  Hotzone,
+  LeaderboardRow,
+  CoverageRun,
+  SkillGap,
+  TaskResponse,
+  VolunteerActivity,
+  TrendPoint,
+  UrgencyDistribution,
+  VolunteerProfileResponse,
+} from "./types";
 import { isGuestMode } from "./guest-mode";
 import { interceptGuestRequest } from "./guest-api-interceptor";
+import { refreshTokens, withFreshToken } from "./token-manager";
 
 // All API calls use relative paths (/api/*) — proxied to the backend by
 // next.config.js rewrites(). No cross-origin requests from the browser.
@@ -143,35 +156,58 @@ export async function fetchSafe(url: string, init?: RequestInit, opts: { attempt
   throw lastError;
 }
 
+/**
+ * Single authenticated request path for the whole app.
+ *
+ * Access tokens live 60 minutes, so any long session will hit an expired one.
+ * This renews proactively when the token is near expiry, and retries once if
+ * the server still rejects it — otherwise the user is silently signed out
+ * mid-task.
+ */
+async function authedRequest<T>(
+  method: string,
+  path: string,
+  token: string,
+  body?: unknown,
+): Promise<T> {
+  const active = (await withFreshToken(token)) ?? token;
+
+  const send = (bearer: string) =>
+    fetchSafe(`${BASE}${path}`, {
+      method,
+      headers: authHeaders(bearer),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+
+  let res = await send(active);
+
+  if (res.status === 401) {
+    const renewed = await refreshTokens();
+    if (renewed) res = await send(renewed);
+  }
+
+  return handleRes<T>(res);
+}
+
 export async function ngoGet<T>(path: string, token: string): Promise<T> {
   if (isGuestMode()) return interceptGuestRequest("GET", path) as T;
-  return handleRes<T>(await fetchSafe(`${BASE}${path}`, { headers: authHeaders(token) }));
+  return authedRequest<T>("GET", path, token);
 }
 
 export async function ngoPost<T>(path: string, token: string, body?: unknown): Promise<T> {
   if (isGuestMode()) return interceptGuestRequest("POST", path, body) as T;
-  return handleRes<T>(await fetchSafe(`${BASE}${path}`, {
-    method: "POST",
-    headers: authHeaders(token),
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  }));
+  return authedRequest<T>("POST", path, token, body);
 }
 
 export async function ngoPut<T>(path: string, token: string, body: unknown): Promise<T> {
   if (isGuestMode()) return interceptGuestRequest("PUT", path, body) as T;
-  return handleRes<T>(await fetchSafe(`${BASE}${path}`, {
-    method: "PUT",
-    headers: authHeaders(token),
-    body: JSON.stringify(body),
-  }));
+  return authedRequest<T>("PUT", path, token, body);
 }
+
 
 export async function ngoDelete<T>(path: string, token: string): Promise<T> {
   if (isGuestMode()) return interceptGuestRequest("DELETE", path) as T;
-  return handleRes<T>(await fetchSafe(`${BASE}${path}`, {
-    method: "DELETE",
-    headers: authHeaders(token),
-  }));
+  return authedRequest<T>("DELETE", path, token);
 }
 
 // ── Typed convenience wrappers ───────────────────────────────────────────────
@@ -222,15 +258,46 @@ export const api = {
     fetch(`${BASE}/api/auth/check-email?email=${encodeURIComponent(email)}`)
       .then(res => res.ok ? res.json() : res.json().then((e: { detail?: string }) => { throw new Error(e.detail ?? "check-email failed"); })),
 
-  chatbotProxy: (token: string | null, body: any) =>
-    fetchSafe(`${BASE}/api/chatbot`, {
+  // Field report ingestion. These go through fetchSafe directly because the
+  // body is multipart, not JSON.
+  ingestText: (token: string, text: string, language = "en") =>
+    ngoPost<{ entities: any; need_id: string | null }>("/api/ingest/text", token, {
+      text,
+      language,
+    }),
+
+  ingestFile: async (
+    token: string,
+    file: File,
+    kind: "document" | "voice",
+  ): Promise<{ entities: any; need_id: string | null; transcript?: string }> => {
+    const active = (await withFreshToken(token)) ?? token;
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetchSafe(
+      `${BASE}/api/ingest/${kind}`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${active}` },
+        body: form,
+      },
+      // Extraction runs a vision or audio model, so allow well past the default.
+      { attempts: 1, timeoutMs: 120000 },
+    );
+    return handleRes(res);
+  },
+
+  chatbotProxy: async (token: string | null, body: any) => {
+    const active = token ? (await withFreshToken(token)) ?? token : null;
+    return fetchSafe(`${BASE}/api/chatbot`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(active ? { Authorization: `Bearer ${active}` } : {}),
       },
       body: JSON.stringify(body),
-    }),
+    });
+  },
 
   guestAuth: (): Promise<AuthResponse> =>
     fetchSafe(`${BASE}/api/auth/guest`, {
@@ -337,6 +404,46 @@ export const api = {
 
   ngoAnalytics: (token: string) =>
     ngoGet<any>("/api/ngo/analytics", token),
+
+  // Richer analytics. These endpoints existed on the backend with no caller.
+  ngoOverview: (token: string) =>
+    ngoGet<AnalyticsOverview>("/api/analytics/ngo-overview", token),
+
+  skillGaps: (token: string) =>
+    ngoGet<{ gaps: SkillGap[] }>("/api/analytics/skill-gaps", token),
+
+  leaderboard: (token: string, limit = 10) =>
+    ngoGet<{ leaderboard: LeaderboardRow[] }>(`/api/analytics/leaderboard?limit=${limit}`, token),
+
+  urgencyDistribution: (token: string) =>
+    ngoGet<UrgencyDistribution>("/api/analytics/urgency-distribution", token),
+
+  hotzoneRanking: (token: string, limit = 10) =>
+    ngoGet<{ hotzones: Hotzone[] }>(`/api/analytics/hotzone-ranking?limit=${limit}`, token),
+
+  activityTrend: (token: string, days = 14) =>
+    ngoGet<{ trend: TrendPoint[]; days: number; data_unavailable?: boolean }>(
+      `/api/analytics/trend?days=${days}`, token),
+
+  skillCoverage: (token: string) =>
+    ngoGet<{ coverage: SkillGap[] }>("/api/analytics/skill-coverage", token),
+
+  needsByType: (token: string) =>
+    ngoGet<{ needs_by_type: { type: string; count: number }[] }>(
+      "/api/analytics/needs-by-type", token),
+
+  volunteerActivity: (token: string, limit = 10) =>
+    ngoGet<{ data: VolunteerActivity[] }>(
+      `/api/analytics/volunteer-activity?limit=${limit}`, token),
+
+  runSimulation: (token: string, strategy: string, numSteps = 50) =>
+    ngoPost<{ result: Record<string, any> }>("/api/sim/run", token, {
+      params: { strategy, num_steps: numSteps },
+    }),
+
+  coverageHistory: (token: string) =>
+    ngoGet<{ history: CoverageRun[]; data_unavailable?: boolean }>(
+      "/api/analytics/coverage-history", token),
 
   ngoAlerts: (token: string) =>
     ngoGet<{ alerts: any[] }>("/api/ngo/alerts", token),
@@ -459,7 +566,7 @@ export const api = {
 export async function googleAuthWithRetry(
   body: GoogleAuthBody,
   opts: { attempts?: number; timeoutMs?: number } = {},
-): Promise<{ token: string; role: string; ngo_id: string | null; needs_ngo_setup?: boolean }> {
+): Promise<AuthResponse> {
   const attempts = Math.max(1, opts.attempts ?? 3);
   const timeoutMs = Math.max(5000, opts.timeoutMs ?? 30000);
   const backoffMs = [800, 1600, 3200];

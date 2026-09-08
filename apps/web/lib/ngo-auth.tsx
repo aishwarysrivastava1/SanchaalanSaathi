@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { api, googleAuthWithRetry, friendlyError, fetchSafe } from "./ngo-api";
 import { signInWithGoogle as firebaseSignInWithGoogle } from "./firebase-auth";
 import { authErrorMessage, isDismissedPopupError } from "./auth-errors";
-import { setToken, clearToken } from "./token-manager";
+import { setTokens, clearToken, getRefreshToken } from "./token-manager";
 
 export type NGOUser = {
   user_id: string;
@@ -80,7 +80,7 @@ export function NGOAuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(err.detail || `Login failed (${res.status})`);
     }
     const data = await res.json();
-    setToken(data.token);
+    setTokens(data.token, data.refresh_token);
     const parsed = parseToken(data.token) as NGOUser;
     setUser(parsed);
     return parsed;
@@ -124,13 +124,23 @@ export function NGOAuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(friendlyError(err));
     }
 
-    setToken(data.token);
+    setTokens(data.token, data.refresh_token);
     const parsed = parseToken(data.token) as NGOUser;
     setUser(parsed);
     return parsed;
   };
 
   const logout = () => {
+    const refresh = getRefreshToken();
+    if (refresh) {
+      // Fire and forget: the session must end locally even if this fails.
+      fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refresh }),
+        keepalive: true,
+      }).catch(() => {});
+    }
     clearToken();
     setUser(null);
   };

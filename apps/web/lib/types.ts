@@ -35,40 +35,6 @@ export interface FirestoreVolunteer {
   role: "NGO" | "Volunteer" | null;
 }
 
-export interface NeedNode {
-  id: string;
-  type: string;
-  sub_type: string;
-  description: string;
-  urgency_score: number;
-  population_affected: number;
-  status: string;
-  location: { lat: number; lng: number; name: string };
-}
-
-export interface HotspotResult {
-  area: string;
-  need_count: number;
-  sample_needs: string[];
-}
-
-export interface SimulationResult {
-  strategy: string;
-  steps_simulated: number;
-  tasks_completed: number;
-  total_tasks: number;
-  completion_rate: number;
-  estimated_hours: number;
-}
-
-export interface SimulationComparison {
-  comparison: {
-    baseline: SimulationResult;
-    optimized: SimulationResult;
-    delta_completion_rate: number;
-  };
-}
-
 export interface Notification {
   id: string;
   title: string;
@@ -217,6 +183,8 @@ export interface ConsentEventResponse {
 
 export interface AuthResponse {
   token: string;
+  /** Long-lived and rotating. Exchanged for a new access token before expiry. */
+  refresh_token?: string | null;
   role: "ngo_admin" | "volunteer" | string;
   ngo_id?: string | null;
   ngo_name?: string | null;
@@ -224,7 +192,18 @@ export interface AuthResponse {
   invite_code?: string | null;
 }
 
-export type RealtimeEventName = "connected" | "location_update" | "task_created" | "assignment_updated" | "pong";
+/** Every event the backend actually publishes on the realtime bus. */
+export type RealtimeEventName =
+  | "connected"
+  | "pong"
+  | "ping"
+  | "task_created"
+  | "task_updated"
+  | "assignment_updated"
+  | "enrollment_requested"
+  | "volunteer_location"
+  | "volunteer_location_cleared"
+  | "sos_alert";
 
 export interface RealtimeEventEnvelope<T = Record<string, unknown>> {
   event: RealtimeEventName | string;
@@ -232,3 +211,68 @@ export interface RealtimeEventEnvelope<T = Record<string, unknown>> {
   timestamp?: string;
 }
 
+
+
+// ── Analytics ────────────────────────────────────────────────────────────────
+
+export interface AnalyticsOverview {
+  tasks: {
+    total: number;
+    open: number;
+    in_progress: number;
+    completed: number;
+    completion_rate_pct: number;
+  };
+  volunteers: { total: number; active: number; utilization_pct: number };
+  assignments: { total: number; completed: number; avg_match_score: number };
+}
+
+export interface SkillGap {
+  skill: string;
+  demand: number;
+  supply: number;
+  gap: number;
+}
+
+export interface LeaderboardRow {
+  rank: number;
+  volunteer_id: string;
+  name: string;
+  completed_tasks: number;
+  avg_match_score: number;
+  avg_rating: number;
+  hours_contributed: number;
+}
+
+export interface UrgencyDistribution {
+  low: number;
+  medium: number;
+  high: number;
+  critical: number;
+}
+
+export interface Hotzone {
+  zone: string;
+  need_count: number;
+  total_urgency: number;
+  total_affected: number;
+}
+
+export interface TrendPoint {
+  date: string;
+  count: number;
+}
+
+export interface VolunteerActivity {
+  name: string;
+  tasks_completed: number;
+  xp: number;
+  reputation: number;
+}
+
+export interface CoverageRun {
+  run_id: string;
+  strategy: string;
+  coverage_pct: number;
+  timestamp: string;
+}

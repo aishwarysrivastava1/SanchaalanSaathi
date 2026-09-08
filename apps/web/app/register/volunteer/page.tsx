@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { api, friendlyError } from "../../../lib/ngo-api";
 import { NGOAuthProvider, useNGOAuth } from "../../../lib/ngo-auth";
 import { enterGuestMode } from "../../../lib/guest-mode";
-import { setToken } from "../../../lib/token-manager";
+import { setTokens } from "../../../lib/token-manager";
 import {
   Users, Eye, EyeOff, Loader2, ChevronDown, X,
   Phone, Shield, CheckCircle2, ArrowRight, MapPin, Heart, Briefcase, Star,
@@ -212,8 +212,8 @@ function VolunteerRegisterForm() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inviteCode]);
 
-  const finalize = (token: string, emailUsed: string) => {
-    setToken(token);
+  const finalize = (token: string, emailUsed: string, refreshToken?: string | null) => {
+    setTokens(token, refreshToken);
     const p = JSON.parse(atob(token.split(".")[1]));
     setUser({ user_id: p.sub, role: "volunteer", ngo_id: p.ngo_id, email: emailUsed, token });
     setSuccess(true);
@@ -244,10 +244,10 @@ function VolunteerRegisterForm() {
       };
       if (googleMode) {
         const auth = await api.googleAuth({ email: googleEmail, firebase_uid: googleUid, role: "volunteer", ...common });
-        finalize(auth.token, googleEmail);
+        finalize(auth.token, googleEmail, auth.refresh_token);
       } else {
         const signup = await api.signup({ email, password, role: "volunteer", ...common });
-        finalize(signup.token, email);
+        finalize(signup.token, email, signup.refresh_token);
       }
     } catch (err: unknown) {
       setError(friendlyError(err));
@@ -505,7 +505,7 @@ function VolunteerRegisterForm() {
           <AnimatePresence>
             {error && (
               <motion.div key="err" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="rounded-xl px-4 py-3 text-sm text-red-300"
+                className="rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-300"
                 style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
                 {error}
               </motion.div>

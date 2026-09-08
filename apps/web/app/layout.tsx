@@ -2,19 +2,26 @@ import type { Metadata, Viewport } from 'next'
 import { Outfit } from 'next/font/google'
 import './globals.css'
 import { ToastProvider } from '../components/ui/ToastProvider'
-import { AuthProvider } from '../lib/auth'
 import { ThemeProvider } from '../components/ui/ThemeProvider'
 import { CookieConsentBanner } from '../components/ui/CookieConsentBanner'
+import ErrorBoundary from '../components/ErrorBoundary'
 import { validateProductionEnv } from '../lib/env'
 
 const font = Outfit({ subsets: ['latin'], display: 'swap' })
 
 export const viewport: Viewport = {
-  themeColor: '#115E54',
+  // Two theme colours so the browser chrome matches the active theme, instead
+  // of painting a light-mode teal bar above a dark page.
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#115E54' },
+    { media: '(prefers-color-scheme: dark)', color: '#072921' },
+  ],
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // `maximumScale: 1` and `userScalable: false` used to be set here. They
+  // disable pinch-zoom on every mobile browser -- a WCAG 1.4.4 failure, and a
+  // real problem for field volunteers reading task detail one-handed outdoors
+  // on a small screen. Do not re-add them.
 }
 
 export const metadata: Metadata = {
@@ -41,14 +48,19 @@ export default function RootLayout({
         />
       </head>
       <body className={`${font.className} bg-[#F5F6F1] dark:bg-gray-950 text-gray-900 dark:text-gray-100`}>
-        <ThemeProvider>
-          <AuthProvider>
+        {/* First tab stop on every page: lets keyboard and screen-reader users
+            jump straight past the sidebar nav to the page content. */}
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+        <ErrorBoundary>
+          <ThemeProvider>
             <ToastProvider>
-              {children}
+              <div id="main-content">{children}</div>
               <CookieConsentBanner />
             </ToastProvider>
-          </AuthProvider>
-        </ThemeProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

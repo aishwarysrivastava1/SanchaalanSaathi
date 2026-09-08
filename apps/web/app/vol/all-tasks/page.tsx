@@ -76,14 +76,14 @@ export default function AllTasksPage() {
       <AnimatePresence>
         {error && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-red-300"
+            className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-red-700 dark:text-red-300"
             style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
             <AlertCircle size={14} /> {error}
           </motion.div>
         )}
         {successMsg && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-emerald-300"
+            className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-emerald-700 dark:text-emerald-300"
             style={{ background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.25)" }}>
             {successMsg}
           </motion.div>

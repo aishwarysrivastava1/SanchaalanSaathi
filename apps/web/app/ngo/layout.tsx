@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard, Users, ClipboardList, Package, BarChart2,
+  LayoutDashboard, Users, ClipboardList, Package, BarChart2, FileText,
   LogOut, Building2, Calendar, MapPin, PanelLeftClose, PanelLeftOpen, UserCircle, Bell,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: "/ngo/tasks",      icon: ClipboardList,   label: "Tasks",           sub: "Create & assign"        },
   { href: "/ngo/resources",  icon: Package,         label: "Resources",       sub: "Inventory & allocation" },
   { href: "/ngo/events",     icon: Calendar,        label: "Events",          sub: "Drives & campaigns"     },
+  { href: "/ngo/reports",    icon: FileText,        label: "Field Reports",   sub: "Ingest & extract"       },
   { href: "/ngo/analytics",  icon: BarChart2,       label: "Analytics",       sub: "Skills & performance"   },
   { href: "/ngo/map",           icon: MapPin,  label: "Deployment Map",  sub: "Live operations"   },
   { href: "/ngo/notifications", icon: Bell,    label: "Notifications",   sub: "Activity & alerts" },

@@ -63,7 +63,3 @@ pnpm-debug.log*
 # ─── AI Assistant internals ───────────────────────────────────────────────────
 .claude/
 .gemini/
-
-# ─── Placeholder / stub apps ──────────────────────────────────────────────────
-apps/dashboard/
-apps/volunteer/

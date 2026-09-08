@@ -127,6 +127,20 @@ const WELCOME: Record<string, string> = {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
+/**
+ * Methods the assistant is permitted to invoke, mirroring ALLOWED_CALLS and
+ * CONFIRM_CALLS in the backend. Generated text must never be able to widen
+ * this set, so the dispatcher checks membership before calling anything.
+ */
+const ALLOWED_CALLS = new Set<string>([
+  "ngoDashboard", "ngoTasks", "ngoVolunteers", "ngoResources", "ngoEvents",
+  "ngoAnalytics", "ngoAlerts", "ngoNotifications", "ngoEnrollmentRequests",
+  "volDashboard", "volTasks", "volOpenTasks", "volProfile",
+  "volNotifications", "getRecommendations",
+  "acceptAssignment", "rejectAssignment", "completeAssignment",
+  "approveEnrollment", "rejectEnrollment", "createTask", "assignTasksOptimized",
+]);
+
 export function ChatbotWidget() {
   const pathname  = usePathname();
   const router    = useRouter();
@@ -199,7 +213,14 @@ export function ChatbotWidget() {
     const logs: string[] = [];
     for (const call of calls) {
       const { method, args = [] } = call;
-      const methodName = method.replace("api.", "");
+      const methodName = String(method ?? "").replace("api.", "");
+
+      // The server filters these already, but dispatch happens here, so the
+      // allowlist is enforced here too.
+      if (!ALLOWED_CALLS.has(methodName)) {
+        console.warn("[chatbot] blocked unlisted call:", methodName);
+        continue;
+      }
       const apiFn = (api as any)[methodName];
       if (typeof apiFn !== "function") continue;
       const label = methodName.replace(/([A-Z])/g, " $1").toLowerCase();

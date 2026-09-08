@@ -1,180 +1,598 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Loader2, AlertCircle, TrendingUp, Users, CheckCircle, Clock } from "lucide-react";
-import { motion } from "motion/react";
+/**
+ * NGO analytics.
+ *
+ * Reads the analytics endpoints that previously had no frontend at all:
+ * ngo-overview, skill-gaps, urgency-distribution, hotzone-ranking, trend and
+ * leaderboard. Each panel offers a table view, so nothing here depends on
+ * colour vision to be readable.
+ */
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
+import { AlertTriangle, CheckCircle2, MapPin, Users } from "lucide-react";
+
 import { api, friendlyError } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
+import { useTheme } from "../../../components/ui/ThemeProvider";
+import { chartTheme, URGENCY_LEVELS } from "../../../components/ui/chart-tokens";
+import {
+  Badge,
+  Card,
+  CardHeader,
+  EmptyState,
+  ErrorState,
+  LoadingCard,
+  PageHeader,
+  Button,
+  Segmented,
+  StatTile,
+  DataTable,
+} from "../../../components/ui/primitives";
+import type {
+  AnalyticsOverview,
+  CoverageRun,
+  Hotzone,
+  LeaderboardRow,
+  SkillGap,
+  TrendPoint,
+  UrgencyDistribution,
+  VolunteerActivity,
+} from "../../../lib/types";
 
-type AnalyticsData = {
-  task_completion_rate: number;
-  avg_assignment_time_hours: number;
-  skill_coverage: Record<string, number>;
-  skill_gaps: string[];
-  volunteer_utilization: number;
-  total_assignments: number;
-  completed_assignments: number;
+type View = "chart" | "table";
+type Strategy = "skill_first" | "proximity_first" | "random";
+
+const STRATEGIES: { value: Strategy; label: string }[] = [
+  { value: "skill_first", label: "Skill first" },
+  { value: "proximity_first", label: "Nearest first" },
+  { value: "random", label: "Random" },
+];
+
+interface Analytics {
+  overview: AnalyticsOverview | null;
+  gaps: SkillGap[];
+  urgency: UrgencyDistribution | null;
+  hotzones: Hotzone[];
+  trend: TrendPoint[];
+  leaderboard: LeaderboardRow[];
+  needTypes: { type: string; count: number }[];
+  activity: VolunteerActivity[];
+  runs: CoverageRun[];
+}
+
+const EMPTY: Analytics = {
+  overview: null,
+  gaps: [],
+  urgency: null,
+  hotzones: [],
+  trend: [],
+  leaderboard: [],
+  needTypes: [],
+  activity: [],
+  runs: [],
 };
 
-const KPI_ICONS = [TrendingUp, Users, CheckCircle, Clock];
-const KPI_LABELS = ["Completion Rate", "Volunteer Utilization", "Completed Assignments", "Avg Assignment Time"];
+/** Panels load independently: one failing endpoint must not blank the page. */
+async function settled<T>(promise: Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await promise;
+  } catch {
+    return fallback;
+  }
+}
 
-export default function AnalyticsPage() {
-  const { user, loading: authLoading } = useNGOAuth();
-  const [data, setData]       = useState<AnalyticsData | null>(null);
+export default function NGOAnalyticsPage() {
+  const { user } = useNGOAuth();
+  const { theme } = useTheme();
+  const colors = chartTheme(theme === "dark");
+
+  const [data, setData] = useState<Analytics>(EMPTY);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState("");
+  const [error, setError] = useState("");
+  const [gapView, setGapView] = useState<View>("chart");
+  const [zoneView, setZoneView] = useState<View>("chart");
+  const [strategy, setStrategy] = useState<Strategy>("skill_first");
+  const [simulating, setSimulating] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!user?.token) return;
+    const token = user.token;
+    setLoading(true);
+    setError("");
+
+    try {
+      const [overview, gaps, urgency, hotzones, trend, leaderboard, needTypes, activity, runs] =
+        await Promise.all([
+        settled(api.ngoOverview(token), null as AnalyticsOverview | null),
+        settled(
+          api.skillGaps(token).then((r) => r.gaps),
+          [] as SkillGap[],
+        ),
+        settled(api.urgencyDistribution(token), null as UrgencyDistribution | null),
+        settled(
+          api.hotzoneRanking(token).then((r) => r.hotzones),
+          [] as Hotzone[],
+        ),
+        settled(
+          api.activityTrend(token, 14).then((r) => r.trend),
+          [] as TrendPoint[],
+        ),
+        settled(
+          api.leaderboard(token).then((r) => r.leaderboard),
+          [] as LeaderboardRow[],
+        ),
+        settled(
+          api.needsByType(token).then((r) => r.needs_by_type),
+          [] as { type: string; count: number }[],
+        ),
+        settled(
+          api.volunteerActivity(token).then((r) => r.data),
+          [] as VolunteerActivity[],
+        ),
+        settled(
+          api.coverageHistory(token).then((r) => r.history),
+          [] as CoverageRun[],
+        ),
+      ]);
+      setData({
+        overview, gaps, urgency, hotzones, trend, leaderboard, needTypes, activity, runs,
+      });
+    } catch (e) {
+      setError(friendlyError(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.token]);
 
   useEffect(() => {
-    if (!user) return;
-    api.ngoAnalytics(user.token)
-      .then((d) => setData(d as AnalyticsData))
-      .catch((e) => setError(friendlyError(e)))
-      .finally(() => setLoading(false));
-  }, [user]);
+    load();
+  }, [load]);
 
-  if (authLoading || loading) return (
-    <div className="flex items-center justify-center h-64">
-      <Loader2 size={22} className="animate-spin text-[#48A15E]" />
-    </div>
-  );
+  const urgencyData = useMemo(() => {
+    if (!data.urgency) return [];
+    return URGENCY_LEVELS.map((level) => ({
+      level: level[0].toUpperCase() + level.slice(1),
+      count: data.urgency?.[level] ?? 0,
+    }));
+  }, [data.urgency]);
 
-  if (!user) return null;
-  if (error) return (
-    <div className="p-6">
-      <div className="rounded-xl p-4 flex items-center gap-3 text-sm text-red-300" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
-        <AlertCircle size={16} /> {error}
+  const runSimulation = async () => {
+    if (!user?.token) return;
+    setSimulating(true);
+    try {
+      await api.runSimulation(user.token, strategy);
+      load();
+    } catch (e) {
+      setError(friendlyError(e));
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  const tooltipStyle = {
+    background: colors.tooltipBg,
+    border: `1px solid ${colors.tooltipBorder}`,
+    borderRadius: 10,
+    color: colors.text,
+    fontSize: 12,
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <PageHeader title="Analytics" description="How your operation is performing." />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <LoadingCard key={i} lines={2} />
+          ))}
+        </div>
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <LoadingCard lines={6} />
+          <LoadingCard lines={6} />
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  const kpiValues = [
-    `${Math.round((data?.task_completion_rate ?? 0) * 100)}%`,
-    `${Math.round((data?.volunteer_utilization ?? 0) * 100)}%`,
-    `${data?.completed_assignments ?? 0} / ${data?.total_assignments ?? 0}`,
-    `${Math.round(data?.avg_assignment_time_hours ?? 0)}h`,
-  ];
+  if (error) {
+    return (
+      <div className="p-6">
+        <PageHeader title="Analytics" />
+        <Card>
+          <ErrorState message={error} onRetry={load} />
+        </Card>
+      </div>
+    );
+  }
 
-  const skillEntries = Object.entries(data?.skill_coverage ?? {}).sort((a, b) => b[1] - a[1]);
-  const maxSkill = skillEntries[0]?.[1] ?? 1;
-
-  // Transform skill data for recharts
-  const chartData = skillEntries.map(([skill, count]) => ({ skill, count }));
+  const { overview, gaps, hotzones, trend, leaderboard, needTypes, activity, runs } = data;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="p-6 space-y-6"
-    >
-      {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-3">
-        {KPI_LABELS.map((label, i) => {
-          const Icon = KPI_ICONS[i];
-          return (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07 }}
-              whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(42,130,86,0.18)", borderColor: "#95C78F" }}
-              className="rounded-2xl border border-gray-200 p-5 flex items-start gap-4"
-              style={{ background: "var(--card-bg)" }}
-            >
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "linear-gradient(135deg, #2A8256 0%, #48A15E 100%)" }}
-              >
-                <Icon size={16} className="text-white" />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-gray-800">{kpiValues[i]}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{label}</p>
-                {i === 3 && <p className="text-[10px] text-gray-300 mt-0.5">from assign to accept</p>}
-              </div>
-            </motion.div>
-          );
-        })}
+    <div className="p-6">
+      <PageHeader
+        title="Analytics"
+        description="How your operation is performing across tasks, people and places."
+      />
+
+      {/* A single number is a stat tile, not a chart. */}
+      <section aria-label="Key numbers" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile
+          label="Tasks completed"
+          value={overview?.tasks.completed ?? 0}
+          hint={`${overview?.tasks.completion_rate_pct ?? 0}% completion rate`}
+          tone={(overview?.tasks.completion_rate_pct ?? 0) >= 60 ? "success" : "warning"}
+          icon={<CheckCircle2 size={16} />}
+        />
+        <StatTile
+          label="Open tasks"
+          value={overview?.tasks.open ?? 0}
+          hint={`${overview?.tasks.in_progress ?? 0} in progress`}
+          icon={<AlertTriangle size={16} />}
+        />
+        <StatTile
+          label="Active volunteers"
+          value={overview?.volunteers.active ?? 0}
+          hint={`${overview?.volunteers.utilization_pct ?? 0}% of ${overview?.volunteers.total ?? 0}`}
+          icon={<Users size={16} />}
+        />
+        <StatTile
+          label="Avg match score"
+          value={overview?.assignments.avg_match_score?.toFixed(2) ?? "0.00"}
+          hint={`${overview?.assignments.total ?? 0} assignments made`}
+        />
+      </section>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        {/* Two series, so a legend is always present. */}
+        <Card>
+          <CardHeader
+            title="Skill gaps"
+            description="Where demand for a skill exceeds the volunteers who have it."
+            action={
+              <Segmented
+                label="Skill gap view"
+                value={gapView}
+                onChange={setGapView}
+                options={[
+                  { value: "chart", label: "Chart" },
+                  { value: "table", label: "Table" },
+                ]}
+              />
+            }
+          />
+          {gaps.length === 0 ? (
+            <EmptyState
+              title="No skill data yet"
+              description="Create tasks that require skills and the gaps will appear here."
+            />
+          ) : gapView === "table" ? (
+            <DataTable
+              rows={gaps}
+              rowKey={(r) => r.skill}
+              columns={[
+                { key: "skill", header: "Skill", render: (r) => r.skill },
+                { key: "demand", header: "Demand", numeric: true, render: (r) => r.demand },
+                { key: "supply", header: "Supply", numeric: true, render: (r) => r.supply },
+                {
+                  key: "gap",
+                  header: "Gap",
+                  numeric: true,
+                  render: (r) =>
+                    r.gap > 0 ? <Badge tone="danger">-{r.gap}</Badge> : <span>0</span>,
+                },
+              ]}
+            />
+          ) : (
+            <div className="p-4">
+              <ResponsiveContainer width="100%" height={Math.max(220, gaps.length * 38)}>
+                <BarChart data={gaps.slice(0, 8)} layout="vertical" barGap={2}>
+                  <CartesianGrid horizontal={false} stroke={colors.grid} />
+                  <XAxis type="number" stroke={colors.axis} fontSize={11} allowDecimals={false} />
+                  <YAxis
+                    type="category"
+                    dataKey="skill"
+                    stroke={colors.axis}
+                    fontSize={11}
+                    width={110}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    cursor={{ fill: colors.grid, opacity: 0.4 }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12, color: colors.axis }} />
+                  <Bar dataKey="demand" name="Demand" fill={colors.series[0]} radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="supply" name="Supply" fill={colors.series[1]} radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+
+        {/* Ordinal severity: one hue, stepped. Order carries the meaning. */}
+        <Card>
+          <CardHeader title="Urgency distribution" description="Reported needs by severity band." />
+          {urgencyData.every((d) => d.count === 0) ? (
+            <EmptyState
+              title="No needs recorded yet"
+              description="Ingest a field report and its urgency will be charted here."
+            />
+          ) : (
+            <div className="p-4">
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={urgencyData}>
+                  <CartesianGrid vertical={false} stroke={colors.grid} />
+                  <XAxis dataKey="level" stroke={colors.axis} fontSize={11} />
+                  <YAxis stroke={colors.axis} fontSize={11} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    cursor={{ fill: colors.grid, opacity: 0.4 }}
+                  />
+                  <Bar dataKey="count" name="Needs" radius={[4, 4, 0, 0]}>
+                    {urgencyData.map((entry, index) => (
+                      <Cell key={entry.level} fill={colors.urgency[index]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+
+        {/* One series over time: area, no legend. The title names it. */}
+        <Card>
+          <CardHeader title="Reports over time" description="Needs reported in the last 14 days." />
+          {trend.length === 0 ? (
+            <EmptyState
+              title="No activity recorded"
+              description="Field reports will chart here once they start arriving."
+            />
+          ) : (
+            <div className="p-4">
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart data={trend}>
+                  <defs>
+                    <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={colors.series[0]} stopOpacity={0.35} />
+                      <stop offset="100%" stopColor={colors.series[0]} stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} stroke={colors.grid} />
+                  <XAxis
+                    dataKey="date"
+                    stroke={colors.axis}
+                    fontSize={11}
+                    tickFormatter={(value: string) => String(value).slice(5)}
+                  />
+                  <YAxis stroke={colors.axis} fontSize={11} allowDecimals={false} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Area
+                    type="monotone"
+                    dataKey="count"
+                    name="Reports"
+                    stroke={colors.series[0]}
+                    strokeWidth={2}
+                    fill="url(#trendFill)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Hot zones"
+            description="Locations carrying the most urgency."
+            action={
+              <Segmented
+                label="Hot zone view"
+                value={zoneView}
+                onChange={setZoneView}
+                options={[
+                  { value: "chart", label: "Chart" },
+                  { value: "table", label: "Table" },
+                ]}
+              />
+            }
+          />
+          {hotzones.length === 0 ? (
+            <EmptyState
+              title="No mapped zones yet"
+              description="Needs with a location will rank here by total urgency."
+              icon={<MapPin size={28} />}
+            />
+          ) : zoneView === "table" ? (
+            <DataTable
+              rows={hotzones}
+              rowKey={(r) => r.zone}
+              columns={[
+                { key: "zone", header: "Zone", render: (r) => r.zone },
+                { key: "needs", header: "Needs", numeric: true, render: (r) => r.need_count },
+                { key: "urg", header: "Urgency", numeric: true, render: (r) => r.total_urgency },
+                { key: "aff", header: "Affected", numeric: true, render: (r) => r.total_affected ?? 0 },
+              ]}
+            />
+          ) : (
+            <div className="p-4">
+              <ResponsiveContainer width="100%" height={Math.max(220, hotzones.length * 34)}>
+                <BarChart data={hotzones.slice(0, 8)} layout="vertical">
+                  <CartesianGrid horizontal={false} stroke={colors.grid} />
+                  <XAxis type="number" stroke={colors.axis} fontSize={11} />
+                  <YAxis
+                    type="category"
+                    dataKey="zone"
+                    stroke={colors.axis}
+                    fontSize={11}
+                    width={110}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    cursor={{ fill: colors.grid, opacity: 0.4 }}
+                  />
+                  <Bar
+                    dataKey="total_urgency"
+                    name="Total urgency"
+                    fill={colors.series[0]}
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
       </div>
 
-      {/* Skill coverage chart */}
-      {chartData.length > 0 && (
-        <motion.div
-          whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
-          className="rounded-2xl border border-gray-200 shadow-sm p-5"
-          style={{ background: "var(--card-bg)" }}
-        >
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Skill Coverage</h2>
-          <ResponsiveContainer width="100%" height={180}>
-            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="skillGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2A8256" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#2A8256" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="skill"
-                tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--card-border)", borderRadius: "8px", fontSize: "12px", color: "var(--card-text-primary)" }}
-                cursor={{ stroke: "#2A8256", strokeWidth: 1, strokeDasharray: "4 2" }}
-              />
-              <Area
-                type="monotone"
-                dataKey="count"
-                stroke="#2A8256"
-                strokeWidth={2}
-                fill="url(#skillGrad)"
-                dot={{ fill: "#2A8256", r: 3 }}
-                activeDot={{ r: 5, fill: "#48A15E" }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </motion.div>
-      )}
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        {/* One series, so no legend: the title names it. */}
+        <Card>
+          <CardHeader title="Needs by type" description="What your reports are about." />
+          {needTypes.length === 0 ? (
+            <EmptyState
+              title="No needs recorded yet"
+              description="Submit a field report and its category will appear here."
+            />
+          ) : (
+            <div className="p-4">
+              <ResponsiveContainer width="100%" height={Math.max(200, needTypes.length * 34)}>
+                <BarChart data={needTypes} layout="vertical">
+                  <CartesianGrid horizontal={false} stroke={colors.grid} />
+                  <XAxis type="number" stroke={colors.axis} fontSize={11} allowDecimals={false} />
+                  <YAxis
+                    type="category"
+                    dataKey="type"
+                    stroke={colors.axis}
+                    fontSize={11}
+                    width={110}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    cursor={{ fill: colors.grid, opacity: 0.4 }}
+                  />
+                  <Bar dataKey="count" name="Needs" fill={colors.series[0]} radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
 
-      {/* Skill gaps */}
-      {(data?.skill_gaps ?? []).length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-amber-200 p-5"
-          style={{ background: "rgba(251,191,36,0.06)" }}
-        >
-          <h2 className="text-sm font-semibold text-amber-800 mb-3">Skill Gaps</h2>
-          <p className="text-xs text-amber-700 mb-3">Tasks require these skills but no volunteer currently has them:</p>
-          <div className="flex flex-wrap gap-2">
-            {data!.skill_gaps.map((s) => (
-              <span key={s} className="text-xs bg-amber-100 text-amber-800 border border-amber-300 rounded-full px-3 py-1 font-medium">
-                {s}
-              </span>
-            ))}
-          </div>
-        </motion.div>
-      )}
+        <Card>
+          <CardHeader
+            title="Volunteer activity"
+            description="Reputation and experience from the knowledge graph."
+          />
+          {activity.length === 0 ? (
+            <EmptyState
+              title="No graph activity yet"
+              description="Activity appears once volunteers save a profile and complete work."
+              icon={<Users size={28} />}
+            />
+          ) : (
+            <DataTable
+              rows={activity}
+              rowKey={(r, i) => `${r.name}-${i}`}
+              columns={[
+                { key: "name", header: "Volunteer", render: (r) => r.name ?? "Unknown" },
+                { key: "done", header: "Completed", numeric: true, render: (r) => r.tasks_completed },
+                { key: "xp", header: "XP", numeric: true, render: (r) => r.xp },
+                {
+                  key: "rep",
+                  header: "Reputation",
+                  numeric: true,
+                  render: (r) => Math.round(r.reputation),
+                },
+              ]}
+            />
+          )}
+        </Card>
+      </div>
 
-      {chartData.length === 0 && (data?.skill_gaps ?? []).length === 0 && (
-        <motion.div
-          whileHover={{ y: -2, borderColor: "#95C78F" }}
-          className="rounded-2xl border border-gray-200 p-8 text-center text-sm text-gray-400"
-          style={{ background: "var(--card-bg)" }}
-        >
-          Not enough data yet. Create tasks and assign volunteers to see analytics.
-        </motion.div>
-      )}
-    </motion.div>
+      <Card className="mt-4">
+        <CardHeader
+          title="Coverage simulation"
+          description="Model how a strategy would perform, then compare past runs."
+          action={
+            <div className="flex items-center gap-2">
+              <Segmented
+                label="Assignment strategy"
+                value={strategy}
+                onChange={setStrategy}
+                options={STRATEGIES}
+              />
+              <Button loading={simulating} onClick={runSimulation}>
+                Run
+              </Button>
+            </div>
+          }
+        />
+        {runs.length === 0 ? (
+          <EmptyState
+            title="No simulations run yet"
+            description="Pick a strategy and run one; results are kept here for comparison."
+          />
+        ) : (
+          <DataTable
+            rows={runs}
+            rowKey={(r) => r.run_id}
+            columns={[
+              { key: "date", header: "Date", render: (r) => r.timestamp },
+              { key: "strategy", header: "Strategy", render: (r) => <Badge>{r.strategy}</Badge> },
+              {
+                key: "coverage",
+                header: "Coverage",
+                numeric: true,
+                render: (r) => `${Math.round(r.coverage_pct * 100) / 100}%`,
+              },
+            ]}
+          />
+        )}
+      </Card>
+
+      {/* Ranked identity plus several numbers reads better as a table. */}
+      <Card className="mt-4">
+        <CardHeader title="Top volunteers" description="Ranked by completed assignments." />
+        {leaderboard.length === 0 ? (
+          <EmptyState
+            title="No completed assignments yet"
+            description="Once volunteers finish tasks they will be ranked here."
+            icon={<Users size={28} />}
+          />
+        ) : (
+          <DataTable
+            rows={leaderboard}
+            rowKey={(r) => r.volunteer_id}
+            columns={[
+              { key: "rank", header: "#", render: (r) => r.rank },
+              { key: "name", header: "Volunteer", render: (r) => r.name },
+              { key: "done", header: "Completed", numeric: true, render: (r) => r.completed_tasks },
+              {
+                key: "hours",
+                header: "Hours",
+                numeric: true,
+                render: (r) => (r.hours_contributed ?? 0).toFixed(1),
+              },
+              {
+                key: "rating",
+                header: "Avg rating",
+                numeric: true,
+                render: (r) => (r.avg_rating ? r.avg_rating.toFixed(1) : "—"),
+              },
+            ]}
+          />
+        )}
+      </Card>
+    </div>
   );
 }

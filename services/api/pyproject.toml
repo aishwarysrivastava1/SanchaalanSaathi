@@ -1,0 +1,30 @@
+[project]
+name = "sanchaalan-saathi-api"
+version = "3.0.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+    "E501",    # line length is handled by the formatter
+    "B008",    # FastAPI's Depends()/File() in defaults is the documented idiom
+    "B905",    # zip() strict= : every zip here is over equal-length sequences
+    "SIM108",  # ternaries are not always clearer than if/else
+    "SIM103",  # sequential guard clauses read better than a compound return
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Verified false positive: the closure is consumed by max() on the next line,
+# before the loop variable is rebound.
+"app/domain/simulation.py" = ["B023"]
+# Tests set environment before importing the app, so imports cannot be top-level.
+"tests/*" = ["E402"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

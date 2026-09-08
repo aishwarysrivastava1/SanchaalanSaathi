@@ -1,4 +1,4 @@
-import { setToken, clearToken } from "./token-manager";
+import { setToken } from "./token-manager";
 
 const GUEST_KEY = "synapse_guest";
 const FAKE_NGO_ID = "guest-ngo-demo-0001";
@@ -32,15 +32,4 @@ export function enterGuestMode(role: "ngo_admin" | "volunteer"): void {
 export function isGuestMode(): boolean {
   if (typeof window === "undefined") return false;
   return !!sessionStorage.getItem(GUEST_KEY);
-}
-
-export function getGuestRole(): "ngo_admin" | "volunteer" | null {
-  if (typeof window === "undefined") return null;
-  return sessionStorage.getItem(GUEST_KEY) as "ngo_admin" | "volunteer" | null;
-}
-
-export function exitGuestMode(): void {
-  if (typeof window === "undefined") return;
-  sessionStorage.removeItem(GUEST_KEY);
-  clearToken();
 }

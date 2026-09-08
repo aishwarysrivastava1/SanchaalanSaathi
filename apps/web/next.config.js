@@ -2,7 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  serverExternalPackages: ['firebase-admin'],
   experimental: {
     optimizePackageImports: ['lucide-react', 'motion/react'],
   },
@@ -11,8 +10,6 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
-      { protocol: 'https', hostname: 'storage.googleapis.com' },
-      { protocol: 'https', hostname: 'firebasestorage.googleapis.com' },
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 86400,
@@ -27,13 +24,14 @@ const nextConfig = {
       { source: "/volunteer-dashboard", destination: "/vol/dashboard",  permanent: true },
       { source: "/select-role",         destination: "/",               permanent: true },
       { source: "/login",               destination: "/login-ngo",      permanent: true },
+      { source: "/login/:path*",        destination: "/login-ngo",      permanent: true },
+      { source: "/register",            destination: "/",               permanent: true },
     ];
   },
 
-  // Proxy all Django API routes through Vercel so the browser never makes
-  // cross-origin requests. Eliminates CORS and CSP issues for every API call.
-  // Next.js checks its own /api/* routes first, so /api/health, /api/tasks/*, etc.
-  // are handled locally and never reach these rewrites.
+  // Proxy the FastAPI backend through Vercel so the browser never makes a
+  // cross-origin request. Next.js matches its own /api/* routes first, so
+  // /api/health is served locally and never reaches these rewrites.
   async rewrites() {
     const backend = (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
     if (!backend) return [];
@@ -73,12 +71,9 @@ const nextConfig = {
       const connectSrc = [
         "'self'",
         'https://maps.googleapis.com',
-        'https://firestore.googleapis.com',
         'https://identitytoolkit.googleapis.com',
         'https://securetoken.googleapis.com',
         'https://www.googleapis.com',
-        'https://firebasestorage.googleapis.com',
-        'wss://*.firebaseio.com',
       ];
 
       if (backendUrl) {
@@ -100,7 +95,7 @@ const nextConfig = {
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' https://maps.googleapis.com https://www.gstatic.com https://apis.google.com https://accounts.google.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com",
+            "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://lh3.googleusercontent.com",
             "font-src 'self' https://fonts.gstatic.com",
             `connect-src ${connectSrc.join(' ')} https://accounts.google.com`,
             "frame-src 'self' https://accounts.google.com https://synapseai-38e29.firebaseapp.com",

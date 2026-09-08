@@ -1,0 +1,71 @@
+# Local development stack: Postgres + Redis + the API.
+#
+#   docker compose up
+#
+# This exists so you can run the whole thing on a laptop without a Supabase or
+# Upstash account, and so Redis-dependent behaviour (realtime fan-out, rate
+# limits, live locations) is exercised locally rather than first discovered in
+# production.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sanchaalan
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    # Bounded memory with LRU eviction: every key here is a cache, a rate-limit
+    # window or an ephemeral location. None of it is worth an OOM.
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./services/api
+    ports:
+      - "8000:8000"
+    environment:
+      DEPLOYMENT_ENV: development
+      SERVICES: all
+      WEB_CONCURRENCY: 1
+      JWT_SECRET_KEY: local-development-only-secret-key-32-chars
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: sanchaalan
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      REDIS_URL: redis://redis:6379/0
+      FRONTEND_URL: http://localhost:3000
+      # Real keys are read from your shell if exported; blank is fine, the
+      # AI and graph endpoints simply return a clear error.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      NEO4J_URI: ${NEO4J_URI:-}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # Live reload of source without rebuilding the image.
+      - ./services/api/app:/app/app:ro
+
+volumes:
+  postgres_data:
