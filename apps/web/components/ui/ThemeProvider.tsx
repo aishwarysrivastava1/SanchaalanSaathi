@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { MotionConfig } from "motion/react";
 
 type Theme = "light" | "dark";
 
@@ -34,7 +35,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={{ theme, toggle }}>
-      {children}
+      {/* Framer animates inline styles from JS, so the reduced-motion rule in
+          globals.css cannot reach it. This makes every motion component in the
+          app honour the OS setting instead. */}
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </ThemeContext.Provider>
   );
 }

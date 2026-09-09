@@ -12,10 +12,10 @@ const ICONS: Record<ToastType, React.ReactNode> = {
 };
 
 const STYLES: Record<ToastType, string> = {
-  success: "border-[#48A15E]/40 bg-[#48A15E]/10 text-[#2A8256]",
+  success: "border-accent/40 bg-accent/10 text-secondary",
   error:   "border-red-400/40   bg-red-50       text-red-600",
   warning: "border-amber-400/40 bg-amber-50     text-amber-700",
-  info:    "border-[#115E54]/30 bg-[#115E54]/8  text-[#115E54]",
+  info:    "border-primary/30 bg-primary/8  text-primary",
 };
 
 function ToastItem({ t, onDismiss }: { t: Toast; onDismiss: (id: string) => void }) {

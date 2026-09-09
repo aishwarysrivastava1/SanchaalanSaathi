@@ -12,6 +12,7 @@ import {
   Phone, Shield, CheckCircle2, ArrowRight, MapPin, Heart, Briefcase, Star,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { riseIn } from "../../../lib/motion";
 
 // ── Tag Input ─────────────────────────────────────────────────────────────────
 
@@ -39,8 +40,8 @@ function TagInput({ tags, onChange, placeholder, suggestions }: {
           <span key={tag} className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold"
             style={{ background: "rgba(26,122,94,0.4)", color: "#6ee7b7", border: "1px solid rgba(26,122,94,0.5)" }}>
             {tag}
-            <button type="button" onClick={e => { e.stopPropagation(); onChange(tags.filter(t => t !== tag)); }}
-              className="hover:text-white ml-0.5"><X size={10} /></button>
+            <button type="button" aria-label={`Remove ${tag}`} onClick={e => { e.stopPropagation(); onChange(tags.filter(t => t !== tag)); }}
+              className="hover:text-white ml-0.5 p-1.5 -mr-1"><X size={12} /></button>
           </span>
         ))}
         <input ref={inputRef} type="text" value={input}
@@ -83,7 +84,7 @@ function SelectField({ value, onChange, options, placeholder }: {
         <option value="" style={{ color: "#888" }}>{placeholder}</option>
         {options.map(o => <option key={o.value} value={o.value} style={{ background: "#0c2520", color: "#fff" }}>{o.label}</option>)}
       </select>
-      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/75 pointer-events-none" />
     </div>
   );
 }
@@ -110,14 +111,14 @@ function Section({ num, icon, title, children }: {
   num: number; icon: React.ReactNode; title: string; children: React.ReactNode;
 }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+    <motion.div {...riseIn}
       transition={{ duration: 0.4, delay: num * 0.08 }}
       className="rounded-2xl p-6 space-y-5"
       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
       <div className="flex items-center gap-3 pb-1">
         <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
-          style={{ background: "linear-gradient(135deg,#1a7a5e,#2A8256)" }}>{num}</div>
-        <div className="flex items-center gap-2 text-white/60">{icon}
+          style={{ background: "linear-gradient(135deg,#1a7a5e,var(--brand-500))" }}>{num}</div>
+        <div className="flex items-center gap-2 text-white/75">{icon}
           <span className="text-sm font-bold text-white">{title}</span>
         </div>
       </div>
@@ -259,21 +260,21 @@ function VolunteerRegisterForm() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center"
-        style={{ background: "radial-gradient(ellipse at 50% 0%, #115E54 0%, #0B3D36 50%, #072921 100%)" }}>
+        style={{ background: "radial-gradient(ellipse at 50% 0%, var(--brand-600) 0%, var(--green-900) 50%, var(--brand-900) 100%)" }}>
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center space-y-4">
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
-            style={{ background: "linear-gradient(135deg,#1a7a5e,#2A8256)", boxShadow: "0 0 40px rgba(26,122,94,0.5)" }}>
+            style={{ background: "linear-gradient(135deg,#1a7a5e,var(--brand-500))", boxShadow: "0 0 40px rgba(26,122,94,0.5)" }}>
             <CheckCircle2 size={36} className="text-white" />
           </div>
           <p className="text-2xl font-bold text-white">Welcome aboard!</p>
-          <p className="text-sm text-white/50">Redirecting to your dashboard…</p>
+          <p className="text-sm text-white/75">Redirecting to your dashboard…</p>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "radial-gradient(ellipse at 60% 0%, #0f3d32 0%, #0B3D36 40%, #072921 100%)" }}>
+    <div className="on-dark min-h-screen overflow-x-hidden" style={{ background: "radial-gradient(ellipse at 60% 0%, #0f3d32 0%, var(--green-900) 40%, var(--brand-900) 100%)" }}>
       <div className="fixed top-0 left-0 w-[500px] h-[500px] rounded-full pointer-events-none opacity-30"
         style={{ background: "rgba(26,122,94,0.2)", filter: "blur(100px)", transform: "translate(-30%,-30%)" }} />
       <div className="fixed bottom-0 right-0 w-[400px] h-[400px] rounded-full pointer-events-none opacity-20"
@@ -287,7 +288,7 @@ function VolunteerRegisterForm() {
           <span className="text-sm font-bold text-white hidden sm:block">Sanchaalan Saathi</span>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-white/35">Already registered?</span>
+          <span className="text-white/75">Already registered?</span>
           <a href="/login-ngo" className="px-3 py-1.5 rounded-lg font-semibold transition-all hover:bg-white/10"
             style={{ color: "#6ee7b7", border: "1px solid rgba(26,122,94,0.45)" }}>
             Sign In
@@ -302,9 +303,9 @@ function VolunteerRegisterForm() {
             <Users size={13} />Volunteer Registration
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight tracking-tight">
-            Join as a <span style={{ background: "linear-gradient(90deg,#2A8256,#6ee7b7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Volunteer</span>
+            Join as a <span style={{ background: "linear-gradient(90deg,var(--brand-500),#6ee7b7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Volunteer</span>
           </h1>
-          <p className="text-sm text-white/40 mt-3 max-w-md mx-auto">
+          <p className="text-sm text-white/75 mt-3 max-w-md mx-auto">
             Register with your NGO&apos;s invite code and start making a difference in your community.
           </p>
         </motion.div>
@@ -347,7 +348,7 @@ function VolunteerRegisterForm() {
               </Field>
               <Field label="Phone Number" required>
                 <div className="relative">
-                  <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+                  <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/75 pointer-events-none" />
                   <input className={`${inputCls} pl-9`} style={inputSty} type="tel" required
                     value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" />
                 </div>
@@ -370,7 +371,8 @@ function VolunteerRegisterForm() {
                     type={showPwd ? "text" : "password"} required minLength={8}
                     value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" />
                   <button type="button" onClick={() => setShowPwd(s => !s)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/35 hover:text-white/70 transition-colors">
+                    aria-label={showPwd ? "Hide password" : "Show password"} aria-pressed={showPwd}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/75 hover:text-white/75 transition-colors">
                     {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
@@ -380,7 +382,7 @@ function VolunteerRegisterForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="City" required>
                 <div className="relative">
-                  <MapPin size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+                  <MapPin size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/75 pointer-events-none" />
                   <input className={`${inputCls} pl-9`} style={inputSty} type="text" required
                     value={city} onChange={e => setCity(e.target.value)} placeholder="Your city" />
                 </div>
@@ -464,7 +466,7 @@ function VolunteerRegisterForm() {
 
           {/* Section 4: Emergency Contact */}
           <Section num={4} icon={<Phone size={14} />} title="Emergency Contact">
-            <p className="text-xs text-white/35">Used only for safety during field operations. Optional but recommended.</p>
+            <p className="text-xs text-white/75">Used only for safety during field operations. Optional but recommended.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Contact Name">
                 <input className={inputCls} style={inputSty} type="text"
@@ -472,7 +474,7 @@ function VolunteerRegisterForm() {
               </Field>
               <Field label="Contact Phone">
                 <div className="relative">
-                  <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+                  <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/75 pointer-events-none" />
                   <input className={`${inputCls} pl-9`} style={inputSty} type="tel"
                     value={emergPhone} onChange={e => setEmergPhone(e.target.value)} placeholder="+91 …" />
                 </div>
@@ -482,7 +484,7 @@ function VolunteerRegisterForm() {
 
           {/* Section 5: Consent */}
           <Section num={5} icon={<Shield size={14} />} title="Privacy & Consent">
-            <p className="text-xs text-white/35">You can update these anytime from your profile settings.</p>
+            <p className="text-xs text-white/75">You can update these anytime from your profile settings.</p>
             <div className="space-y-3">
               {[
                 { label: "Allow service communication and important updates from your NGO", val: commOptIn, set: setCommOptIn },
@@ -493,10 +495,10 @@ function VolunteerRegisterForm() {
                 <label key={label} className="flex items-start gap-3 cursor-pointer group">
                   <div onClick={() => set(!val)}
                     className="mt-0.5 w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
-                    style={{ background: val ? "linear-gradient(135deg,#1a7a5e,#2A8256)" : "rgba(255,255,255,0.07)", border: `1px solid ${val ? "transparent" : "rgba(255,255,255,0.18)"}` }}>
+                    style={{ background: val ? "linear-gradient(135deg,#1a7a5e,var(--brand-500))" : "rgba(255,255,255,0.07)", border: `1px solid ${val ? "transparent" : "rgba(255,255,255,0.18)"}` }}>
                     {val && <CheckCircle2 size={12} className="text-white" />}
                   </div>
-                  <span className="text-sm text-white/60 group-hover:text-white/80 transition-colors leading-relaxed">{label}</span>
+                  <span className="text-sm text-white/75 group-hover:text-white/80 transition-colors leading-relaxed">{label}</span>
                 </label>
               ))}
             </div>
@@ -543,7 +545,7 @@ function VolunteerRegisterForm() {
             </button>
           </div>
 
-          <p className="text-center text-xs text-white/25 pb-4">
+          <p className="text-center text-xs text-white/75 pb-4">
             Already have an account?{" "}
             <a href="/login-ngo" className="font-semibold hover:underline" style={{ color: "#6ee7b7" }}>Sign In</a>
             {" "}·{" "}
@@ -560,7 +562,7 @@ export default function VolunteerRegisterPage() {
     <NGOAuthProvider>
       <Suspense fallback={
         <div className="min-h-screen"
-          style={{ background: "radial-gradient(ellipse at 60% 0%, #0f3d32 0%, #0B3D36 40%, #072921 100%)" }} />
+          style={{ background: "radial-gradient(ellipse at 60% 0%, #0f3d32 0%, var(--green-900) 40%, var(--brand-900) 100%)" }} />
       }>
         <VolunteerRegisterForm />
       </Suspense>

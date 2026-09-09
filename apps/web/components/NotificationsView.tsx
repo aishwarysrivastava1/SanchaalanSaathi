@@ -111,7 +111,7 @@ export function NotificationsView({ role }: { role: "ngo" | "volunteer" }) {
                     "flex items-start gap-3 p-4 " + (n.is_read ? "opacity-70" : "cursor-pointer")
                   }
                 >
-                  <span className="mt-0.5 shrink-0 text-[#2A8256] dark:text-[#48A15E]">
+                  <span className="mt-0.5 shrink-0 text-secondary dark:text-accent">
                     <Icon size={16} />
                   </span>
                   <div className="min-w-0 flex-1">

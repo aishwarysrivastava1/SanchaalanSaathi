@@ -6,8 +6,10 @@ import {
   CheckCircle2, Clock, Edit2, Bell, Copy, Check, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { HOVER_LIFT, TAP_PRESS, CARD_LIFT, riseIn } from "../../../lib/motion";
 import { api, friendlyError } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
+import { Modal } from "../../../components/ui/primitives";
 
 type Task = {
   id: string; title: string; description: string;
@@ -56,14 +58,14 @@ function SkillChipInput({ value, onChange }: { value: string[]; onChange: (v: st
         <input value={input} onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
           placeholder="Add skill + Enter"
-          className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#115E54]/50" />
-        <button type="button" onClick={add} className="bg-[#115E54] text-white px-3 py-2 rounded-lg text-sm font-semibold">Add</button>
+          className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50" />
+        <button type="button" onClick={add} className="bg-primary text-white px-3 py-2 rounded-lg text-sm font-semibold">Add</button>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {value.map((s) => (
           <span key={s} className="flex items-center gap-1 bg-teal-50 text-teal-700 border border-teal-100 rounded-full px-2.5 py-1 text-xs font-medium">
             {s}
-            <button type="button" onClick={() => onChange(value.filter((x) => x !== s))} className="hover:text-red-500"><X size={10} /></button>
+            <button type="button" onClick={() => onChange(value.filter((x) => x !== s))} aria-label={`Remove ${s}`} className="hover:text-red-500 p-1.5 -mr-1"><X size={12} /></button>
           </span>
         ))}
       </div>
@@ -213,16 +215,16 @@ export default function TasksPage() {
     finally { setActioning(null); }
   };
 
-  if (authLoading) return <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-[#48A15E]" /></div>;
+  if (authLoading) return <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-accent" /></div>;
   if (!user) return null;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="p-6 space-y-5">
+    <motion.div {...riseIn} transition={{ duration: 0.4 }} className="p-6 space-y-5">
 
       {error && (
         <div className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-red-700 dark:text-red-300" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
           <AlertCircle size={14} /> {error}
-          <button onClick={() => setError("")} className="ml-auto"><X size={12} /></button>
+          <button onClick={() => setError("")} aria-label="Dismiss error" className="ml-auto p-1.5"><X size={12} /></button>
         </div>
       )}
 
@@ -251,7 +253,7 @@ export default function TasksPage() {
                         <div className="flex gap-2 shrink-0">
                           <button onClick={() => handleEnrollAction(r.id, true)} disabled={actioning === r.id}
                             className="text-[11px] text-white rounded-lg px-3 py-1.5 font-semibold disabled:opacity-50 flex items-center gap-1"
-                            style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}>
+                            style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}>
                             {actioning === r.id ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle2 size={10} />} Approve
                           </button>
                           <button onClick={() => handleEnrollAction(r.id, false)} disabled={actioning === r.id}
@@ -276,31 +278,31 @@ export default function TasksPage() {
           placeholder="Search tasks…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#115E54]/50 w-full sm:w-48"
+          className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary/50 w-full sm:w-48"
         />
         <div className="flex gap-1.5 flex-wrap">
           {FILTERS.map((f) => (
             <button key={f} onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                filter === f ? "text-white border-transparent" : "bg-gray-50 border-gray-200 text-gray-500 hover:border-[#2A8256]/40 hover:text-[#2A8256]"
+                filter === f ? "text-white border-transparent" : "bg-gray-50 border-gray-200 text-gray-500 hover:border-secondary/40 hover:text-secondary"
               }`}
-              style={filter === f ? { background: "linear-gradient(135deg,#2A8256,#48A15E)" } : {}}>
+              style={filter === f ? { background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" } : {}}>
               {f}
             </button>
           ))}
         </div>
-        <motion.button onClick={() => setShowCreate(true)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+        <motion.button onClick={() => setShowCreate(true)} whileHover={HOVER_LIFT} whileTap={TAP_PRESS}
           className="ml-auto flex items-center gap-2 text-white px-4 py-2 rounded-xl text-sm font-semibold"
-          style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}>
+          style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}>
           <Plus size={14} /> New Task
         </motion.button>
       </div>
 
       {/* Task list */}
       {loading ? (
-        <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-[#48A15E]" /></div>
+        <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-accent" /></div>
       ) : filtered.length === 0 ? (
-        <motion.div whileHover={{ y: -2, borderColor: "#95C78F" }}
+        <motion.div whileHover={CARD_LIFT}
           className="rounded-2xl border border-gray-200 p-8 text-center text-sm text-gray-400"
           style={{ background: "var(--card-bg)" }}>
           No tasks found. Click &quot;New Task&quot; to create one.
@@ -311,8 +313,8 @@ export default function TasksPage() {
             const meta = STATUS_META[task.status] ?? STATUS_META.open;
             return (
               <motion.div key={task.id}
-                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                whileHover={{ y: -2, boxShadow: "0 16px 36px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+                {...riseIn} transition={{ delay: i * 0.04 }}
+                whileHover={CARD_LIFT}
                 className="rounded-2xl border border-gray-200 overflow-hidden"
                 style={{ background: "var(--card-bg)", borderLeft: `4px solid ${meta.borderColor}` }}>
                 <div className="px-5 py-4">
@@ -326,7 +328,7 @@ export default function TasksPage() {
                       {task.description && <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{task.description}</p>}
                       <div className="flex flex-wrap gap-1 mt-2">
                         {task.required_skills.map((s) => (
-                          <span key={s} className="text-[10px] text-[#2A8256] border border-[#2A8256]/20 rounded-full px-2 py-0.5" style={{ background: "rgba(42,130,86,0.08)" }}>{s}</span>
+                          <span key={s} className="text-[10px] text-secondary border border-secondary/20 rounded-full px-2 py-0.5" style={{ background: "rgba(42,130,86,0.08)" }}>{s}</span>
                         ))}
                       </div>
                       <div className="flex flex-wrap gap-4 mt-2">
@@ -342,7 +344,7 @@ export default function TasksPage() {
                     <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
                       {task.status === "open" && (
                         <button onClick={() => openAssign(task)} disabled={matchLoading}
-                          className="flex items-center gap-1 text-xs rounded-lg px-2.5 py-1.5 font-semibold text-[#2A8256] disabled:opacity-50"
+                          className="flex items-center gap-1 text-xs rounded-lg px-2.5 py-1.5 font-semibold text-secondary disabled:opacity-50"
                           style={{ background: "rgba(42,130,86,0.1)", border: "1px solid rgba(42,130,86,0.2)" }}>
                           {matchLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />} Assign
                         </button>
@@ -365,6 +367,7 @@ export default function TasksPage() {
                         <Edit2 size={10} /> Edit
                       </button>
                       <button onClick={() => handleDelete(task.id)} disabled={deleting === task.id}
+                        aria-label={`Delete task ${task.title}`}
                         className="text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg p-1.5 transition-all">
                         {deleting === task.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                       </button>
@@ -378,27 +381,17 @@ export default function TasksPage() {
       )}
 
       {/* Create modal */}
-      <AnimatePresence>
-        {showCreate && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
-                <p className="text-sm font-bold text-gray-800">Create Task</p>
-                <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-600 p-1"><X size={16} /></button>
-              </div>
+      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create Task">
               <form onSubmit={handleCreate} className="p-5 space-y-4">
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Title</label>
                   <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50" />
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary/50" />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Description</label>
                   <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#115E54]/50 resize-none" />
+                    rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50 resize-none" />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Required Skills</label>
@@ -420,39 +413,26 @@ export default function TasksPage() {
                       className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none" />
                   </div>
                 </div>
-                <motion.button type="submit" disabled={saving} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                <motion.button type="submit" disabled={saving} whileHover={HOVER_LIFT} whileTap={TAP_PRESS}
                   className="w-full text-white py-2.5 rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2"
-                  style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}>
+                  style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}>
                   {saving && <Loader2 size={14} className="animate-spin" />} Create Task
                 </motion.button>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </Modal>
 
       {/* Edit modal */}
-      <AnimatePresence>
-        {editTask && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
-                <p className="text-sm font-bold text-gray-800">Edit Task</p>
-                <button onClick={() => setEditTask(null)} className="text-gray-400 hover:text-gray-600 p-1"><X size={16} /></button>
-              </div>
+      <Modal open={Boolean(editTask)} onClose={() => setEditTask(null)} title="Edit Task">
               <form onSubmit={handleEdit} className="p-5 space-y-4">
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Title</label>
                   <input value={editForm.title ?? ""} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50" />
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary/50" />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Description</label>
                   <textarea value={editForm.description ?? ""} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                    rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#115E54]/50 resize-none" />
+                    rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50 resize-none" />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Required Skills</label>
@@ -484,32 +464,23 @@ export default function TasksPage() {
                   <input type="date" value={editForm.deadline ?? ""} onChange={(e) => setEditForm({ ...editForm, deadline: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none" />
                 </div>
-                <motion.button type="submit" disabled={saving} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                <motion.button type="submit" disabled={saving} whileHover={HOVER_LIFT} whileTap={TAP_PRESS}
                   className="w-full text-white py-2.5 rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2"
-                  style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}>
+                  style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}>
                   {saving && <Loader2 size={14} className="animate-spin" />} Save Changes
                 </motion.button>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </Modal>
 
       {/* Ping modal */}
-      <AnimatePresence>
-        {pingTask && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <div>
-                  <p className="text-sm font-bold text-gray-800 flex items-center gap-2"><Bell size={13} className="text-indigo-500" /> Ping Volunteers</p>
-                  <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[240px]">{pingTask.title}</p>
-                </div>
-                <button onClick={() => { setPingTask(null); setPingCount(null); }} className="text-gray-400 hover:text-gray-600 p-1"><X size={16} /></button>
-              </div>
+      <Modal
+        open={Boolean(pingTask)}
+        onClose={() => { setPingTask(null); setPingCount(null); }}
+        title="Ping Volunteers"
+        subtitle={pingTask?.title}
+        icon={<Bell size={13} className="text-indigo-500" />}
+        maxWidth="max-w-sm"
+      >
               <div className="p-5 space-y-4">
                 {pingCount !== null ? (
                   <div className="text-center py-4 space-y-2">
@@ -524,9 +495,9 @@ export default function TasksPage() {
                       <label className="text-xs font-medium text-gray-600 block mb-1">Custom message <span className="text-gray-300">(optional)</span></label>
                       <textarea value={pingMsg} onChange={(e) => setPingMsg(e.target.value)} rows={3}
                         placeholder="Leave blank for default message…"
-                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50 resize-none" />
+                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary/50 resize-none" />
                     </div>
-                    <motion.button onClick={handlePing} disabled={pinging} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                    <motion.button onClick={handlePing} disabled={pinging} whileHover={HOVER_LIFT} whileTap={TAP_PRESS}
                       className="w-full text-white py-2.5 rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2"
                       style={{ background: "linear-gradient(135deg,#6366f1,#818cf8)" }}>
                       {pinging && <Loader2 size={14} className="animate-spin" />} Send Notification
@@ -534,32 +505,23 @@ export default function TasksPage() {
                   </>
                 )}
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </Modal>
 
       {/* AI Assign modal */}
-      <AnimatePresence>
-        {assignModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <div>
-                  <div className="flex items-center gap-2"><Sparkles size={14} className="text-[#2A8256]" /><p className="text-sm font-bold text-gray-800">AI Volunteer Match</p></div>
-                  <p className="text-xs text-gray-400 mt-0.5">{assignModal.task.title}</p>
-                </div>
-                <button onClick={() => setAssignModal(null)} className="text-gray-400 hover:text-gray-600 p-1"><X size={16} /></button>
-              </div>
+      <Modal
+        open={Boolean(assignModal)}
+        onClose={() => setAssignModal(null)}
+        title="AI Volunteer Match"
+        subtitle={assignModal?.task.title}
+        icon={<Sparkles size={14} className="text-secondary" />}
+        maxWidth="max-w-lg"
+      >
               <div className="p-5 max-h-[400px] overflow-y-auto space-y-2">
-                {assignModal.ranked.length === 0 ? (
+                {!assignModal || assignModal.ranked.length === 0 ? (
                   <p className="text-center text-sm text-gray-400 py-6">No matching volunteers available.</p>
                 ) : assignModal.ranked.map((r, i) => (
                   <div key={r.volunteer_id} className="flex items-center gap-3 rounded-xl px-4 py-3 border border-gray-100" style={{ background: "var(--card-bg)" }}>
-                    <div className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}>{i + 1}</div>
+                    <div className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}>{i + 1}</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 truncate">{r.name || r.email}</p>
                       <div className="flex gap-1 mt-0.5 flex-wrap">
@@ -568,19 +530,16 @@ export default function TasksPage() {
                         ))}
                       </div>
                     </div>
-                    <div className="text-sm font-bold text-[#2A8256] shrink-0">{Math.round(r.score * 100)}%</div>
-                    <button onClick={() => handleAssign(assignModal.task.id, r.volunteer_id)} disabled={assigning === r.volunteer_id}
+                    <div className="text-sm font-bold text-secondary shrink-0">{Math.round(r.score * 100)}%</div>
+                    <button onClick={() => assignModal && handleAssign(assignModal.task.id, r.volunteer_id)} disabled={assigning === r.volunteer_id}
                       className="flex items-center gap-1 text-xs text-white rounded-lg px-3 py-1.5 font-semibold disabled:opacity-50 shrink-0"
-                      style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}>
+                      style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}>
                       {assigning === r.volunteer_id ? <Loader2 size={10} className="animate-spin" /> : <UserCheck size={10} />} Assign
                     </button>
                   </div>
                 ))}
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </Modal>
     </motion.div>
   );
 }

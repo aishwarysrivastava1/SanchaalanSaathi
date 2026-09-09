@@ -29,34 +29,29 @@ const config: Config = {
         "3xl": ["2.125rem", { lineHeight: "2.5rem" }],
       },
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        // Brand palette — Sanchaalan Saathi
+        // Layer 1 - primitive scale. Mirrors the --brand-* vars in globals.css.
         brand: {
-          50:  "#F5F6F1",  // cream background
+          50:  "#F5F6F1",
           100: "#E8F5E9",
           200: "#C8E6C9",
-          300: "#95C78F",  // pale mint
-          400: "#48A15E",  // vibrant leaf green
-          500: "#2A8256",  // medium forest green
-          600: "#115E54",  // deep teal — PRIMARY
+          300: "#95C78F",
+          400: "#48A15E",
+          500: "#2A8256",
+          600: "#115E54",
           700: "#0d4a42",
           800: "#0a3832",
           900: "#072921",
         },
-        // Neon aliases → remapped to brand-aware semantic colors
-        neon: {
-          cyan:   "#115E54",  // → brand primary teal
-          green:  "#48A15E",  // → brand accent leaf green
-          purple: "#2A8256",  // → brand secondary forest green
-          orange: "#d97706",  // → amber (urgency/warnings — kept semantic)
-          red:    "#dc2626",  // → standard red (errors/critical — kept)
-        },
-        hud: {
-          bg:     "#FFFFFF",
-          border: "#E5E7EB",
-          panel:  "#FFFFFF",
-        },
+        // Layer 2 - semantic aliases. Components use THESE, not the numbers
+        // and never a raw hex. Literal values rather than var() so Tailwind's
+        // opacity modifiers (bg-primary/50) keep working.
+        primary:       "#115E54",
+        "primary-dim": "#0d4a42",  // hover / pressed
+        secondary:     "#2A8256",
+        accent:        "#48A15E",
+        subtle:        "#95C78F",
+        canvas:        "#F5F6F1",
+        deep:          "#072921",
       },
       animation: {
         "glow-pulse": "glow-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",

@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Loader2, AlertCircle, CheckCircle2, Award, MapPin, MapPinOff, User, Shield, X } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Award, MapPin, MapPinOff, User, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { HOVER_LIFT, TAP_PRESS, TAP_PRESS_ICON, CARD_LIFT } from "../../../lib/motion";
 import { api, friendlyError } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
+import { Modal } from "../../../components/ui/primitives";
 
 const PREDEFINED_SKILLS = [
   "First Aid", "Teaching", "Medical", "Counseling", "Driving",
@@ -175,13 +177,13 @@ export default function VolProfilePage() {
 
   if (authLoading || loading) return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 size={22} className="animate-spin text-[#48A15E]" />
+      <Loader2 size={22} className="animate-spin text-accent" />
     </div>
   );
   if (!user) return null;
 
   const activeDayCount = DAYS.filter((d) => availability[d]).length;
-  const inputCls = "w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50 text-gray-800 placeholder-gray-400";
+  const inputCls = "w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary/50 text-gray-800 placeholder-gray-400";
 
   return (
     <motion.div
@@ -209,12 +211,12 @@ export default function VolProfilePage() {
 
       {/* Personal Info */}
       <motion.div
-        whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+        whileHover={CARD_LIFT}
         className="rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4"
         style={{ background: "var(--card-bg)" }}
       >
         <div className="flex items-center gap-2">
-          <User size={14} className="text-[#2A8256]" />
+          <User size={14} className="text-secondary" />
           <h2 className="text-sm font-semibold text-gray-700">Personal Info</h2>
           <span className="ml-auto text-[10px] text-gray-400">* optional</span>
         </div>
@@ -277,7 +279,7 @@ export default function VolProfilePage() {
 
       {/* Extended preferences */}
       <motion.div
-        whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+        whileHover={CARD_LIFT}
         className="rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4"
         style={{ background: "var(--card-bg)" }}
       >
@@ -304,7 +306,7 @@ export default function VolProfilePage() {
 
       {/* Skills */}
       <motion.div
-        whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+        whileHover={CARD_LIFT}
         className="rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4"
         style={{ background: "var(--card-bg)" }}
       >
@@ -314,13 +316,13 @@ export default function VolProfilePage() {
             const selected = skills.includes(s);
             return (
               <motion.button
-                key={s} type="button" onClick={() => toggleSkill(s)} whileTap={{ scale: 0.92 }}
+                key={s} type="button" onClick={() => toggleSkill(s)} whileTap={TAP_PRESS_ICON}
                 className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${
-                  selected ? "text-[#2A8256] border-[#2A8256]/30" : "bg-gray-50 border-gray-200 text-gray-500 hover:border-[#2A8256]/40 hover:text-[#2A8256]"
+                  selected ? "text-secondary border-secondary/30" : "bg-gray-50 border-gray-200 text-gray-500 hover:border-secondary/40 hover:text-secondary"
                 }`}
                 style={selected ? { background: "rgba(42,130,86,0.1)" } : {}}
               >
-                {selected && <span className="w-1.5 h-1.5 rounded-full bg-[#48A15E] shrink-0" />}
+                {selected && <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />}
                 {s}
               </motion.button>
             );
@@ -330,7 +332,7 @@ export default function VolProfilePage() {
 
       {/* Availability */}
       <motion.div
-        whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+        whileHover={CARD_LIFT}
         className="rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4"
         style={{ background: "var(--card-bg)" }}
       >
@@ -341,9 +343,9 @@ export default function VolProfilePage() {
               key={d} type="button" onClick={() => toggleDay(d)} whileTap={{ scale: 0.88 }}
               transition={{ type: "spring", stiffness: 500, damping: 20 }}
               className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-xs font-semibold transition-colors ${
-                availability[d] ? "text-white border-transparent" : "bg-gray-50 border-gray-200 text-gray-400 hover:border-[#2A8256]/40 hover:text-[#2A8256]"
+                availability[d] ? "text-white border-transparent" : "bg-gray-50 border-gray-200 text-gray-400 hover:border-secondary/40 hover:text-secondary"
               }`}
-              style={availability[d] ? { background: "linear-gradient(135deg,#2A8256,#48A15E)" } : {}}
+              style={availability[d] ? { background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" } : {}}
             >
               <span>{DAY_LABELS[d]}</span>
               <div className={`w-1.5 h-1.5 rounded-full ${availability[d] ? "bg-white/60" : "bg-gray-200"}`} />
@@ -356,14 +358,14 @@ export default function VolProfilePage() {
       {/* Performance */}
       {performance && (
         <motion.div
-          whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+          whileHover={CARD_LIFT}
           className="rounded-2xl border border-gray-200 shadow-sm p-5"
           style={{ background: "var(--card-bg)" }}
         >
           <h2 className="text-sm font-semibold text-gray-700 mb-4">Performance</h2>
           <div className="grid grid-cols-3 gap-3">
             <div className="text-center">
-              <div className="text-xl font-bold" style={{ color: "#2A8256" }}>{performance.performance_score.toFixed(0)}%</div>
+              <div className="text-xl font-bold" style={{ color: "var(--brand-500)" }}>{performance.performance_score.toFixed(0)}%</div>
               <div className="text-[10px] text-gray-400 mt-0.5">Score</div>
             </div>
             <div className="text-center">
@@ -380,7 +382,7 @@ export default function VolProfilePage() {
               initial={{ width: 0 }} animate={{ width: `${performance.performance_score}%` }}
               transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
               className="h-full rounded-full"
-              style={{ background: "linear-gradient(90deg,#2A8256,#48A15E)" }}
+              style={{ background: "linear-gradient(90deg,var(--brand-500),var(--brand-400))" }}
             />
           </div>
         </motion.div>
@@ -388,29 +390,29 @@ export default function VolProfilePage() {
 
       {/* Badges */}
       <motion.div
-        whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+        whileHover={CARD_LIFT}
         className="rounded-2xl border border-gray-200 shadow-sm p-5"
         style={{ background: "var(--card-bg)" }}
       >
         <div className="flex items-center gap-2 mb-4">
-          <Award size={14} className="text-[#2A8256]" />
+          <Award size={14} className="text-secondary" />
           <h2 className="text-sm font-semibold text-gray-700">Achievements</h2>
           {performance && <span className="ml-auto text-[10px] text-gray-400">{performance.completed_tasks} task{performance.completed_tasks !== 1 ? "s" : ""} done</span>}
         </div>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {BADGES.map((b) => {
             const unlocked = (performance?.completed_tasks ?? 0) >= b.threshold;
             return (
               <motion.div
                 key={b.id} whileHover={{ scale: unlocked ? 1.06 : 1 }}
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all ${
-                  unlocked ? "border-[#2A8256]/30 bg-gradient-to-b from-emerald-50 to-white" : "border-gray-100 bg-gray-50 opacity-40 grayscale"
+                  unlocked ? "border-secondary/30 bg-gradient-to-b from-emerald-50 to-white" : "border-gray-100 bg-gray-50 opacity-40 grayscale"
                 }`}
               >
                 <span className="text-xl">{b.emoji}</span>
                 <p className="text-[10px] font-bold text-gray-700">{b.label}</p>
                 <p className="text-[9px] text-gray-400 leading-tight">{b.desc}</p>
-                {unlocked && <div className="w-1.5 h-1.5 rounded-full bg-[#48A15E]" />}
+                {unlocked && <div className="w-1.5 h-1.5 rounded-full bg-accent" />}
               </motion.div>
             );
           })}
@@ -419,14 +421,14 @@ export default function VolProfilePage() {
 
       {/* Location sharing */}
       <motion.div
-        whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+        whileHover={CARD_LIFT}
         className="rounded-2xl border border-gray-200 shadow-sm p-5"
         style={{ background: "var(--card-bg)" }}
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: shareLocation ? "linear-gradient(135deg,#2A8256,#48A15E)" : "rgba(107,114,128,0.12)" }}>
+              style={{ background: shareLocation ? "linear-gradient(135deg,var(--brand-500),var(--brand-400))" : "rgba(107,114,128,0.12)" }}>
               {shareLocation ? <MapPin size={16} className="text-white" /> : <MapPinOff size={16} className="text-gray-400" />}
             </div>
             <div>
@@ -442,7 +444,7 @@ export default function VolProfilePage() {
           <button
             type="button" onClick={handleLocationToggle}
             className="shrink-0 relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none"
-            style={{ background: shareLocation ? "linear-gradient(135deg,#2A8256,#48A15E)" : "rgba(209,213,219,1)" }}
+            style={{ background: shareLocation ? "linear-gradient(135deg,var(--brand-500),var(--brand-400))" : "rgba(209,213,219,1)" }}
             aria-label="Toggle location sharing"
           >
             <motion.span
@@ -457,33 +459,27 @@ export default function VolProfilePage() {
 
       <motion.button
         onClick={handleSave} disabled={saving}
-        whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+        whileHover={HOVER_LIFT} whileTap={TAP_PRESS}
         className="w-full text-white py-3 rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2"
-        style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}
+        style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}
       >
         {saving && <Loader2 size={14} className="animate-spin" />}
         Save Profile
       </motion.button>
 
       {/* Location Consent Modal */}
-      <AnimatePresence>
-        {showConsentModal && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 16 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 16 }}
-              transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
-            >
+      <Modal
+        open={showConsentModal}
+        onClose={() => setShowConsentModal(false)}
+        title="Share your location"
+        chrome={false}
+        maxWidth="max-w-sm"
+      >
               {/* Header */}
               <div className="px-6 pt-6 pb-4 text-center">
                 <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
                   style={{ background: "linear-gradient(135deg,rgba(42,130,86,0.12),rgba(72,161,94,0.18))" }}>
-                  <Shield size={26} style={{ color: "#2A8256" }} />
+                  <Shield size={26} style={{ color: "var(--brand-500)" }} />
                 </div>
                 <h3 className="text-base font-bold text-gray-800">Location Sharing Request</h3>
                 <p className="text-xs text-gray-500 mt-2.5 leading-relaxed">
@@ -491,7 +487,7 @@ export default function VolProfilePage() {
                   position on the deployment map. This helps your team coordinate more effectively
                   during field operations.
                 </p>
-                <p className="text-xs font-semibold mt-3" style={{ color: "#2A8256" }}>
+                <p className="text-xs font-semibold mt-3" style={{ color: "var(--brand-500)" }}>
                   You can stop sharing at any time by toggling this off.
                 </p>
               </div>
@@ -499,7 +495,7 @@ export default function VolProfilePage() {
               {/* Privacy note */}
               <div className="mx-6 mb-4 rounded-xl px-3 py-2.5 flex items-start gap-2.5"
                 style={{ background: "rgba(42,130,86,0.06)", border: "1px solid rgba(42,130,86,0.15)" }}>
-                <MapPin size={12} className="mt-0.5 shrink-0" style={{ color: "#2A8256" }} />
+                <MapPin size={12} className="mt-0.5 shrink-0" style={{ color: "var(--brand-500)" }} />
                 <p className="text-[10px] text-gray-500 leading-relaxed">
                   Your location is only shared with your NGO administrators and is never sold or shared with third parties.
                 </p>
@@ -515,17 +511,14 @@ export default function VolProfilePage() {
                 </button>
                 <motion.button
                   onClick={handleConsentAllow}
-                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                  whileHover={HOVER_LIFT} whileTap={TAP_PRESS}
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
-                  style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}
+                  style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}
                 >
                   Allow
                 </motion.button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </Modal>
     </motion.div>
   );
 }

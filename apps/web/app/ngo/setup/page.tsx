@@ -42,6 +42,8 @@ export default function NGOSetupPage() {
     <div
       style={{
         minHeight: "100vh",
+        // Decorative orbs sit at -10% insets; without this they widen the page.
+        overflowX: "hidden",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -80,7 +82,7 @@ export default function NGOSetupPage() {
         >
           {/* Header strip */}
           <div style={{ padding: "22px 28px 0", display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 11, background: "linear-gradient(135deg, #2A8256, #48A15E)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 14px rgba(42,130,86,0.4)" }}>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: "linear-gradient(135deg, var(--brand-500), var(--brand-400))", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 14px rgba(42,130,86,0.4)" }}>
               <Building2 size={17} color="#fff" />
             </div>
             <div>

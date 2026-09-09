@@ -186,8 +186,9 @@ possible.
 │   │   ├── register/             NGO + volunteer signup
 │   │   └── api/health/           health proxy to the backend
 │   ├── components/
-│   │   ├── ui/primitives.tsx     Card, Badge, Button, DataTable, states
+│   │   ├── ui/primitives.tsx     Card, Badge, Button, DataTable, Modal, states
 │   │   ├── ui/chart-tokens.ts    validated light/dark chart palettes
+│   │   ├── ui/BottomNav.tsx      mobile nav: 4 slots + "More" sheet
 │   │   ├── map/                  Google Maps controller + markers
 │   │   └── NotificationsView.tsx shared by both portals
 │   ├── hooks/                    useApi, useRealtimeSocket, useToast
@@ -196,6 +197,7 @@ possible.
 │   │   ├── token-manager.ts      access/refresh tokens, single-flight refresh
 │   │   ├── ngo-auth.tsx          auth context
 │   │   ├── guest-mode.ts         client-side demo mode
+│   │   ├── motion.ts             the motion scale (durations, springs, lifts)
 │   │   └── env.ts                fails the deploy on missing config
 │   ├── middleware.ts             route guard + security headers
 │   └── next.config.js            rewrites, CSP, redirects
@@ -203,7 +205,7 @@ possible.
 ├── services/api/                 FastAPI backend
 │   ├── app/
 │   │   ├── main.py               app factory, module selection, lifespan
-│   │   ├── models.py             SQLAlchemy models (17 tables)
+│   │   ├── models.py             SQLAlchemy models (18 tables)
 │   │   ├── schemas.py            Pydantic request/response models
 │   │   ├── core/                 config, db, deps, security, ratelimit,
 │   │   │                         cache, events, errors, middleware,
@@ -228,6 +230,10 @@ possible.
 │   ├── tests/                    92 tests
 │   ├── Dockerfile
 │   └── railway.toml              pre-deploy migration + healthcheck
+│
+├── design-system/
+│   └── sanchaalan-saathi/
+│       └── MASTER.md             tokens, component specs, a11y contract
 │
 ├── docs/
 │   ├── HLD.md                    high-level design
@@ -399,7 +405,7 @@ rewrite — Vercel does not proxy WebSocket upgrades. That is why
 
 ## Data model
 
-17 tables in PostgreSQL:
+18 tables in PostgreSQL:
 
 | Group | Tables |
 |---|---|
@@ -531,7 +537,7 @@ a backend that boots misconfigured fails later, in public.
 
 ## API reference
 
-Around 100 routes. Interactive docs at `/docs` on a running instance.
+95 routes. Interactive docs at `/docs` on a running instance.
 
 ### Identity — `/api/auth`
 
@@ -728,6 +734,7 @@ A newer push cancels an in-flight run on the same branch.
 | **[docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)** | The requirement analysis the design answers to |
 | **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** | Step-by-step deployment with troubleshooting |
 | **[docs/sql/reap-guest-data.sql](docs/sql/reap-guest-data.sql)** | Scheduled cleanup for demo/guest rows |
+| **[design-system/sanchaalan-saathi/MASTER.md](design-system/sanchaalan-saathi/MASTER.md)** | Design tokens, component specs, motion scale, accessibility contract |
 
 ---
 

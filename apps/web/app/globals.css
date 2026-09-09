@@ -2,55 +2,96 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Light mode tokens ─────────────────────────────── */
+/* ============================================================================
+   DESIGN TOKENS - three layers
+     1. Primitive  raw values, no meaning. Change almost never.
+     2. Semantic   purpose aliases over primitives. This is what flips on theme.
+     3. Component  per-component overrides built from semantics.
+   Components must reference layer 2 or 3, never a raw hex. The Tailwind
+   `brand-*` scale in tailwind.config.ts mirrors layer 1 by design.
+   ========================================================================== */
+
+/* --- Layer 1: primitives ------------------------------------------------- */
 :root {
-  --brand-primary:      #115E54;
-  --brand-secondary:    #2A8256;
-  --brand-accent:       #48A15E;
-  --brand-light:        #95C78F;
-  --brand-bg:           #F5F6F1;
-  --text-primary:       #111827;
-  --text-secondary:     #6B7280;
-  --border-color:       #E5E7EB;
+  --brand-50:  #F5F6F1;
+  --brand-100: #E8F5E9;
+  --brand-200: #C8E6C9;
+  --brand-300: #95C78F;
+  --brand-400: #48A15E;
+  --brand-500: #2A8256;
+  --brand-600: #115E54;
+  --brand-700: #0d4a42;
+  --brand-800: #0a3832;
+  --brand-900: #072921;
 
-  --bg-brand-darkest:   #0B3D36;
-  --bg-brand-primary:   #115E54;
-  --brand-accent-core:  #2A8256;
-  --brand-accent-light: #48A15E;
-  --brand-success:      #95C78F;
-  --bg-canvas:          #F5F6F1;
+  --neutral-0:   #FFFFFF;
+  --neutral-50:  #F9FAFB;
+  --neutral-200: #E5E7EB;
+  --neutral-500: #6B7280;
+  --neutral-700: #374151;
+  --neutral-900: #111827;
 
-  --bg-base:            #F5F6F1;
-  --bg-surface:         #FFFFFF;
-  --bg-muted:           #F9FAFB;
-  --modal-bg:           #FFFFFF;
-  --content-bg:         #F5F6F1;   /* portal content area — white in light */
-
-  --card-bg:            linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%);
-  --card-bg-flat:       #ffffff;
-  --card-border:        #E5E7EB;
-  --card-text-primary:  #1f2937;
-  --card-text-muted:    #6b7280;
+  --green-950: #072921;
+  --green-900: #0B3D36;
+  --green-850: #0d3028;
+  --green-800: #122622;
+  --green-880: #0a2019;
 }
 
-/* ── Dark mode tokens ──────────────────────────────── */
-/* Dark = signature teal-green palette                  */
+/* --- Layer 2: semantic (light) ------------------------------------------- */
+:root {
+  --brand-primary:      var(--brand-600);
+  --brand-secondary:    var(--brand-500);
+  --brand-accent:       var(--brand-400);
+  --brand-light:        var(--brand-300);
+  --brand-bg:           var(--brand-50);
+
+  --text-primary:       var(--neutral-900);
+  --text-secondary:     var(--neutral-500);
+  --border-color:       var(--neutral-200);
+
+  --bg-brand-darkest:   var(--green-900);
+  --bg-brand-primary:   var(--brand-600);
+  --brand-accent-core:  var(--brand-500);
+  --brand-accent-light: var(--brand-400);
+  --brand-success:      var(--brand-300);
+  --bg-canvas:          var(--brand-50);
+
+  --bg-base:            var(--brand-50);
+  --bg-surface:         var(--neutral-0);
+  --bg-muted:           var(--neutral-50);
+  --modal-bg:           var(--neutral-0);
+  --content-bg:         var(--brand-50);   /* portal content area */
+}
+
+/* --- Layer 3: component (light) ------------------------------------------ */
+:root {
+  --card-bg:            linear-gradient(135deg, #F5F6F1 0%, #ffffff 100%);
+  --card-bg-flat:       var(--neutral-0);
+  --card-border:        var(--neutral-200);
+  --card-text-primary:  #1f2937;
+  --card-text-muted:    var(--neutral-500);
+}
+
+/* --- Layers 2 + 3 overridden for dark ------------------------------------ */
+/* Dark = signature teal-green palette. Only the semantic and component
+   layers move; primitives above are theme-independent. */
 .dark {
-  --brand-bg:       #072921;
+  --brand-bg:       var(--green-950);
   --text-primary:   #f1f5f9;
   --text-secondary: rgba(255,255,255,0.55);
   --border-color:   rgba(255,255,255,0.1);
 
-  --bg-base:        #072921;       /* deepest green — body bg */
-  --bg-surface:     #122622;       /* card / panel surface    */
-  --bg-muted:       #0a2019;       /* muted / table-row bg    */
-  --modal-bg:       #0d3028;       /* modal / sheet bg        */
-  --content-bg:     #0B3D36;       /* portal content area — green in dark */
+  --bg-base:        var(--green-950);   /* deepest green - body bg */
+  --bg-surface:     var(--green-800);   /* card / panel surface    */
+  --bg-muted:       var(--green-880);   /* muted / table-row bg    */
+  --modal-bg:       var(--green-850);   /* modal / sheet bg        */
+  --content-bg:     var(--green-900);   /* portal content area     */
 
   color-scheme: dark;
 
   --card-bg:            linear-gradient(135deg, #122622 0%, #0e2218 100%);
-  --card-bg-flat:       #122622;
+  --card-bg-flat:       var(--green-800);
   --card-border:        rgba(255,255,255,0.1);
   --card-text-primary:  #f1f5f9;
   --card-text-muted:    rgba(255,255,255,0.55);
@@ -109,6 +150,61 @@ body {
   left: 0;
 }
 
+/* -- Atmosphere -----------------------------------------------------------
+   The content surface was a single flat fill, so large or half-empty pages
+   read as dead space. Two very low-alpha washes anchored off-canvas give the
+   surface a light source without introducing a decorative element that
+   competes with data. Alpha stays <=10% so text contrast is unaffected and
+   the wash never reads as a coloured panel. */
+.app-canvas {
+  background-color: var(--content-bg);
+  background-image:
+    radial-gradient(60rem 40rem at 12% -10%, rgba(42, 130, 86, 0.06), transparent 60%),
+    radial-gradient(45rem 32rem at 100% 0%, rgba(17, 94, 84, 0.05), transparent 55%);
+}
+
+/* Dark surfaces need more light, not less: the same alphas vanish on green. */
+.dark .app-canvas {
+  background-image:
+    radial-gradient(60rem 40rem at 12% -10%, rgba(72, 161, 94, 0.10), transparent 60%),
+    radial-gradient(45rem 32rem at 100% 0%, rgba(149, 199, 143, 0.05), transparent 55%);
+}
+
+/* ── Focus visibility ────────────────────────
+   Forms across the app use Tailwind's `outline-none`, most replacing focus
+   with a 50%-opacity border colour and some with nothing at all -- a keyboard
+   user could not see where they were. WCAG 2.4.7.
+
+   A utility class (0,1,0) outranks an element selector (0,0,1), so countering
+   `outline-none` at the root needs !important. One rule here covers every
+   existing control and anything added later, which is why this is not fixed
+   field by field. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid #115E54 !important;
+  outline-offset: 2px !important;
+}
+
+/* #115E54 on a dark green surface is far too low-contrast to read as a ring. */
+.dark a:focus-visible,
+.dark button:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark textarea:focus-visible,
+.dark summary:focus-visible,
+.dark [role="button"]:focus-visible,
+.dark [role="tab"]:focus-visible,
+.dark [tabindex]:not([tabindex="-1"]):focus-visible {
+  outline-color: #95C78F !important;
+}
+
 /* ── Reduced motion ─────────────────────────────────────
    This app runs several infinite animations (glow-pulse, float, shimmer,
    swing). For users with vestibular disorders those are not decoration,
@@ -141,6 +237,27 @@ body {
 .dark .text-white\/35            { color: rgba(255,255,255,0.35) !important; }
 .dark .text-white\/30            { color: rgba(255,255,255,0.3)  !important; }
 .dark .text-white\/25            { color: rgba(255,255,255,0.25) !important; }
+
+/* -- Always-dark chrome opt-out -------------------------------------------
+   The remap above assumes white-ish text sits on a light surface in light
+   mode. The portal sidebar and header are a green gradient in BOTH themes, so
+   remapping them turned their labels grey on green: the header email measured
+   1.35:1 and the sidebar sub-labels 2.09:1 in light mode.
+
+   `.on-dark` marks those surfaces. Two classes beat one, so these win without
+   !important; the .dark rules keep theirs and agree on the value anyway. */
+.on-dark .text-white\/85 { color: rgba(255,255,255,0.85); }
+.on-dark .text-white\/75 { color: rgba(255,255,255,0.75); }
+.on-dark .text-white\/65 { color: rgba(255,255,255,0.65); }
+.on-dark .text-white\/80 { color: rgba(255,255,255,0.80); }
+.on-dark .text-white\/70 { color: rgba(255,255,255,0.70); }
+.on-dark .text-white\/60 { color: rgba(255,255,255,0.60); }
+.on-dark .text-white\/50 { color: rgba(255,255,255,0.50); }
+.on-dark .text-white\/45 { color: rgba(255,255,255,0.45); }
+.on-dark .text-white\/40 { color: rgba(255,255,255,0.40); }
+.on-dark .text-white\/35 { color: rgba(255,255,255,0.35); }
+.on-dark .text-white\/30 { color: rgba(255,255,255,0.30); }
+.on-dark .text-white\/25 { color: rgba(255,255,255,0.25); }
 
 /* ── Dark mode cascade overrides ───────────────────── */
 /* Backgrounds — teal-green family */

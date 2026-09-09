@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { BarChart2, Sparkles, Trophy, CheckCircle, ClipboardList, AlertCircle, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
+import { CARD_LIFT } from "../../../lib/motion";
 import { api, RecommendedTask, friendlyError } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
 
@@ -66,7 +67,7 @@ export default function VolAnalyticsPage() {
 
   if (authLoading || loading) return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 size={22} className="animate-spin text-[#48A15E]" />
+      <Loader2 size={22} className="animate-spin text-accent" />
     </div>
   );
   if (!user) return null;
@@ -90,7 +91,7 @@ export default function VolAnalyticsPage() {
       )}
 
       {/* KPI cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[
           { label: "Performance Score", value: `${score.toFixed(0)}%`, icon: BarChart2,    color: "#48A15E" },
           { label: "Tasks Completed",   value: completed,              icon: CheckCircle,  color: "#60a5fa" },
@@ -101,7 +102,7 @@ export default function VolAnalyticsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.07 }}
-            whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(42,130,86,0.18)", borderColor: "#95C78F" }}
+            whileHover={CARD_LIFT}
             className="rounded-2xl border border-gray-200 p-4 flex flex-col gap-2 cursor-default"
             style={{ background: "var(--card-bg)" }}
           >
@@ -116,13 +117,13 @@ export default function VolAnalyticsPage() {
 
       {/* Score bar */}
       <motion.div
-        whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+        whileHover={CARD_LIFT}
         className="rounded-2xl border border-gray-200 p-5"
         style={{ background: "var(--card-bg)" }}
       >
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm font-semibold text-gray-700">Overall Performance</p>
-          <span className="text-sm font-bold" style={{ color: "#2A8256" }}>{score.toFixed(1)}%</span>
+          <span className="text-sm font-bold" style={{ color: "var(--brand-500)" }}>{score.toFixed(1)}%</span>
         </div>
         <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
           <motion.div
@@ -130,7 +131,7 @@ export default function VolAnalyticsPage() {
             animate={{ width: `${score}%` }}
             transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
             className="h-full rounded-full"
-            style={{ background: "linear-gradient(90deg, #2A8256 0%, #48A15E 100%)" }}
+            style={{ background: "linear-gradient(90deg, var(--brand-500) 0%, var(--brand-400) 100%)" }}
           />
         </div>
         <p className="text-[10px] text-gray-400 mt-2">
@@ -140,12 +141,12 @@ export default function VolAnalyticsPage() {
 
       {/* Badges */}
       <motion.div
-        whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+        whileHover={CARD_LIFT}
         className="rounded-2xl border border-gray-200 p-5"
         style={{ background: "var(--card-bg)" }}
       >
         <div className="flex items-center gap-2 mb-4">
-          <Trophy size={14} className="text-[#2A8256]" />
+          <Trophy size={14} className="text-secondary" />
           <h2 className="text-sm font-semibold text-gray-700">Achievements</h2>
           {nextBadge && (
             <span className="ml-auto text-[10px] text-gray-400">
@@ -153,7 +154,7 @@ export default function VolAnalyticsPage() {
             </span>
           )}
         </div>
-        <div className="grid grid-cols-4 gap-2 mb-4">
+        <div className="grid grid-cols-2 gap-2 mb-4 sm:grid-cols-4">
           {BADGES.map((b) => {
             const unlocked = completed >= b.threshold;
             return (
@@ -162,7 +163,7 @@ export default function VolAnalyticsPage() {
                 whileHover={{ scale: unlocked ? 1.06 : 1 }}
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center ${
                   unlocked
-                    ? "border-[#2A8256]/30 bg-gradient-to-b from-emerald-50 to-white"
+                    ? "border-secondary/30 bg-gradient-to-b from-emerald-50 to-white"
                     : "border-gray-100 bg-gray-50 opacity-40 grayscale"
                 }`}
               >
@@ -180,7 +181,7 @@ export default function VolAnalyticsPage() {
               animate={{ width: `${badgeProgress}%` }}
               transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
               className="h-full rounded-full"
-              style={{ background: "linear-gradient(90deg, #2A8256 0%, #48A15E 100%)" }}
+              style={{ background: "linear-gradient(90deg, var(--brand-500) 0%, var(--brand-400) 100%)" }}
             />
           </div>
         )}
@@ -189,12 +190,12 @@ export default function VolAnalyticsPage() {
       {/* AI Recommendations */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles size={13} className="text-[#48A15E]" />
+          <Sparkles size={13} className="text-accent" />
           <h2 className="text-sm font-semibold text-gray-700">AI Task Recommendations</h2>
         </div>
         {recs.length === 0 ? (
           <motion.div
-            whileHover={{ y: -2, borderColor: "#95C78F" }}
+            whileHover={CARD_LIFT}
             className="rounded-2xl border border-gray-200 p-6 text-center text-sm text-gray-400"
             style={{ background: "var(--card-bg)" }}
           >
@@ -208,9 +209,9 @@ export default function VolAnalyticsPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06 }}
-                whileHover={{ y: -3, boxShadow: "0 12px 28px rgba(42,130,86,0.15)", borderColor: "#95C78F" }}
+                whileHover={CARD_LIFT}
                 className="rounded-2xl border border-gray-200 p-4"
-                style={{ background: "var(--card-bg)", borderLeft: "4px solid #48A15E" }}
+                style={{ background: "var(--card-bg)", borderLeft: "4px solid var(--brand-400)" }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -227,7 +228,7 @@ export default function VolAnalyticsPage() {
                     {r.description && <p className="text-xs text-gray-500 mt-1 line-clamp-1">{r.description}</p>}
                     <div className="flex flex-wrap gap-1 mt-2">
                       {r.matched_skills.map((s) => (
-                        <span key={s} className="text-[10px] text-[#2A8256] border border-[#2A8256]/20 rounded-full px-1.5 py-0.5" style={{ background: "rgba(42,130,86,0.08)" }}>{s}</span>
+                        <span key={s} className="text-[10px] text-secondary border border-secondary/20 rounded-full px-1.5 py-0.5" style={{ background: "rgba(42,130,86,0.08)" }}>{s}</span>
                       ))}
                       {r.required_skills.filter((s) => !r.matched_skills.includes(s)).map((s) => (
                         <span key={s} className="text-[10px] text-gray-400 border border-gray-200 rounded-full px-1.5 py-0.5 bg-gray-50">{s}</span>
@@ -235,7 +236,7 @@ export default function VolAnalyticsPage() {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-base font-bold" style={{ color: "#2A8256" }}>{Math.round(r.match_score * 100)}%</div>
+                    <div className="text-base font-bold" style={{ color: "var(--brand-500)" }}>{Math.round(r.match_score * 100)}%</div>
                     <div className="text-[9px] text-gray-400">match</div>
                   </div>
                 </div>
@@ -250,7 +251,7 @@ export default function VolAnalyticsPage() {
         <div>
           <h2 className="text-sm font-semibold text-gray-700 mb-3">Task History</h2>
           <motion.div
-            whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+            whileHover={CARD_LIFT}
             className="rounded-2xl border border-gray-200 overflow-hidden"
             style={{ background: "var(--card-bg)" }}
           >
@@ -266,7 +267,7 @@ export default function VolAnalyticsPage() {
                 {tasks.map((t, i) => (
                   <tr
                     key={t.task_id}
-                    className={`border-b border-gray-50 hover:bg-[#2A8256]/5 transition-colors ${i === tasks.length - 1 ? "border-0" : ""}`}
+                    className={`border-b border-gray-50 hover:bg-secondary/5 transition-colors ${i === tasks.length - 1 ? "border-0" : ""}`}
                   >
                     <td className="px-4 py-3 font-medium text-gray-800 text-xs">{t.title}</td>
                     <td className="px-4 py-3">

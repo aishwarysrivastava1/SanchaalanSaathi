@@ -151,7 +151,7 @@ export default function FieldReportsPage() {
                   rows={8}
                   maxLength={20000}
                   placeholder="Flooding on the east approach road. About 200 families cut off, no drinking water since yesterday."
-                  className="w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-[#115E54] dark:border-white/15 dark:bg-white/5 dark:text-gray-100 dark:placeholder-white/30"
+                  className="w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-primary dark:border-white/15 dark:bg-white/5 dark:text-gray-100 dark:placeholder-white/30"
                 />
                 <p className="text-xs text-gray-500 dark:text-white/45">
                   {text.trim().length < 10
@@ -171,7 +171,7 @@ export default function FieldReportsPage() {
                 />
                 <label
                   htmlFor="report-file"
-                  className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 px-6 py-10 text-center transition-colors hover:border-[#115E54] dark:border-white/20 dark:hover:border-[#48A15E]"
+                  className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 px-6 py-10 text-center transition-colors hover:border-primary dark:border-white/20 dark:hover:border-accent"
                 >
                   {mode === "voice" ? (
                     <Mic size={26} className="text-gray-400 dark:text-white/40" />
@@ -330,7 +330,7 @@ export default function FieldReportsPage() {
             },
           ].map(({ icon: Icon, title, body }) => (
             <div key={title} className="flex gap-3">
-              <Icon size={18} className="mt-0.5 shrink-0 text-[#115E54] dark:text-[#48A15E]" />
+              <Icon size={18} className="mt-0.5 shrink-0 text-primary dark:text-accent" />
               <div>
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{title}</p>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-white/50">{body}</p>

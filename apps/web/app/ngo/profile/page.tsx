@@ -42,14 +42,14 @@ export default function NGOProfilePage() {
 
   if (authLoading || loading) return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 size={22} className="animate-spin text-[#48A15E]" />
+      <Loader2 size={22} className="animate-spin text-accent" />
     </div>
   );
   if (!user) return null;
 
   const Row = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
     <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid var(--card-border)" }}>
-      <div className="text-[#48A15E] shrink-0">{icon}</div>
+      <div className="text-accent shrink-0">{icon}</div>
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--card-text-muted)" }}>{label}</p>
         <p className="text-sm font-medium mt-0.5" style={{ color: "var(--card-text-primary)" }}>{value}</p>
@@ -68,7 +68,7 @@ export default function NGOProfilePage() {
       <div className="rounded-2xl border p-6 space-y-4" style={{ background: "var(--card-bg)", borderColor: "var(--card-border)" }}>
         <div className="flex items-center gap-3 mb-2">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
-            style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}>
+            style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}>
             <ShieldCheck size={22} color="#fff" />
           </div>
           <div>
@@ -88,7 +88,7 @@ export default function NGOProfilePage() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
               style={{ background: "rgba(42,130,86,0.15)" }}>
-              <Building2 size={18} className="text-[#48A15E]" />
+              <Building2 size={18} className="text-accent" />
             </div>
             <div>
               <p className="font-bold text-sm" style={{ color: "var(--card-text-primary)" }}>{ngo.name}</p>
@@ -102,7 +102,7 @@ export default function NGOProfilePage() {
             <div className="rounded-xl px-4 py-3 flex items-center justify-between gap-3"
               style={{ background: "rgba(42,130,86,0.08)", border: "1px solid rgba(72,161,94,0.2)" }}>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[#48A15E]">Invite Code</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-accent">Invite Code</p>
                 <p className="font-mono font-bold tracking-widest text-base mt-0.5" style={{ color: "var(--card-text-primary)" }}>
                   {ngo.invite_code}
                 </p>

@@ -36,31 +36,3 @@ export function useApi<T>(
 
   return { data, loading, error, reload };
 }
-
-/** Runs a write and reports whether it is in flight. */
-export function useAction(): {
-  busy: string | null;
-  error: string;
-  run: (key: string, action: () => Promise<unknown>, after?: () => void) => Promise<void>;
-} {
-  const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState("");
-
-  const run = useCallback(
-    async (key: string, action: () => Promise<unknown>, after?: () => void) => {
-      setBusy(key);
-      setError("");
-      try {
-        await action();
-        after?.();
-      } catch (e) {
-        setError(friendlyError(e));
-      } finally {
-        setBusy(null);
-      }
-    },
-    [],
-  );
-
-  return { busy, error, run };
-}

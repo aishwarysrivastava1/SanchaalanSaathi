@@ -485,7 +485,7 @@ export default function DeploymentMap() {
             border: isDark ? "1px solid rgba(149,199,143,0.35)" : "1px solid rgba(149,199,143,0.3)",
           }}
         >
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#95C78F", display: "inline-block", animation: "pulse-ring 1.8s ease-out infinite" }} />
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand-300)", display: "inline-block", animation: "pulse-ring 1.8s ease-out infinite" }} />
           {liveVols.length > 0 ? `${liveVols.length} LIVE` : "NO VOLUNTEERS SHARING"}
           <span style={{ opacity: 0.75 }}>
             {connectionState === "connected" ? "WS ON" : "WS RETRY"}

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Clock, CheckCircle2, XCircle, Loader2, AlertCircle, ChevronDown, ChevronRight, ClipboardList } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { CARD_LIFT, riseIn } from "../../../lib/motion";
 import { api, friendlyError } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
 
@@ -76,11 +77,11 @@ export default function VolTasksPage() {
       f === "Completed" ? t.assignment_status === "completed" : true
     ).length;
 
-  if (authLoading) return <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-[#48A15E]" /></div>;
+  if (authLoading) return <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-accent" /></div>;
   if (!user) return null;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="p-6 space-y-5">
+    <motion.div {...riseIn} transition={{ duration: 0.4 }} className="p-6 space-y-5">
 
       {error && (
         <div className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-red-700 dark:text-red-300" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
@@ -97,9 +98,9 @@ export default function VolTasksPage() {
             className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
               filter === f
                 ? "text-white border-transparent"
-                : "bg-gray-50 border-gray-200 text-gray-500 hover:border-[#2A8256]/40 hover:text-[#2A8256]"
+                : "bg-gray-50 border-gray-200 text-gray-500 hover:border-secondary/40 hover:text-secondary"
             }`}
-            style={filter === f ? { background: "linear-gradient(135deg,#2A8256,#48A15E)" } : {}}
+            style={filter === f ? { background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" } : {}}
           >
             {f}{f !== "All" && <span className="ml-1 opacity-60">({countFor(f)})</span>}
           </button>
@@ -107,10 +108,10 @@ export default function VolTasksPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-[#48A15E]" /></div>
+        <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-accent" /></div>
       ) : filtered.length === 0 ? (
         <motion.div
-          whileHover={{ y: -2, borderColor: "#95C78F" }}
+          whileHover={CARD_LIFT}
           className="rounded-2xl border border-gray-200 p-10 text-center"
           style={{ background: "var(--card-bg)" }}
         >
@@ -125,8 +126,8 @@ export default function VolTasksPage() {
             return (
               <motion.div
                 key={task.assignment_id}
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+                {...riseIn} transition={{ delay: i * 0.05 }}
+                whileHover={CARD_LIFT}
                 className="rounded-2xl border border-gray-200 overflow-hidden"
                 style={{ background: "var(--card-bg)" }}
               >
@@ -140,7 +141,7 @@ export default function VolTasksPage() {
                       {task.description && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{task.description}</p>}
                       <div className="flex flex-wrap gap-1 mt-2">
                         {(task.required_skills ?? []).map((s) => (
-                          <span key={s} className="text-[10px] text-[#2A8256] border border-[#2A8256]/20 rounded-full px-2 py-0.5" style={{ background: "rgba(42,130,86,0.08)" }}>{s}</span>
+                          <span key={s} className="text-[10px] text-secondary border border-secondary/20 rounded-full px-2 py-0.5" style={{ background: "rgba(42,130,86,0.08)" }}>{s}</span>
                         ))}
                       </div>
                       <div className="flex flex-wrap gap-4 mt-2">
@@ -162,7 +163,7 @@ export default function VolTasksPage() {
                             onClick={() => act(task.assignment_id, () => api.acceptAssignment(user.token, task.assignment_id))}
                             disabled={!!actioning}
                             className="flex items-center gap-1 text-xs text-white rounded-lg px-3 py-1.5 font-semibold disabled:opacity-50"
-                            style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}
+                            style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}
                           >
                             {busy ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle2 size={11} />} Accept
                           </button>
@@ -180,7 +181,7 @@ export default function VolTasksPage() {
                           onClick={() => act(task.assignment_id, () => api.completeAssignment(user.token, task.assignment_id))}
                           disabled={!!actioning}
                           className="flex items-center gap-1 text-xs text-white rounded-lg px-3 py-1.5 font-semibold disabled:opacity-50"
-                          style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}
+                          style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}
                         >
                           {busy ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle2 size={11} />} Complete
                         </button>

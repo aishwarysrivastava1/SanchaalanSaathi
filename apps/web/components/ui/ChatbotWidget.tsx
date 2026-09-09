@@ -8,6 +8,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { HOVER_LIFT_ICON, TAP_PRESS_ICON } from "../../lib/motion";
 import { usePathname, useRouter } from "next/navigation";
 import { api } from "@/lib/ngo-api";
 
@@ -453,10 +454,10 @@ export function ChatbotWidget() {
       {/* ── Floating toggle button ─────────────────────────── */}
       <motion.button
         onClick={open ? () => setOpen(false) : handleOpen}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.92 }}
+        whileHover={HOVER_LIFT_ICON}
+        whileTap={TAP_PRESS_ICON}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center"
-        style={{ background: "linear-gradient(135deg, #0B3D36 0%, #115E54 60%, #2A8256 100%)", boxShadow: "0 8px 32px rgba(17,94,84,0.5)" }}
+        style={{ background: "linear-gradient(135deg, var(--green-900) 0%, var(--brand-600) 60%, var(--brand-500) 100%)", boxShadow: "0 8px 32px rgba(17,94,84,0.5)" }}
         aria-label="Open Saathi assistant"
       >
         <AnimatePresence mode="wait">
@@ -493,7 +494,7 @@ export function ChatbotWidget() {
             }}
           >
             {/* Header */}
-            <div className="px-5 py-3.5 shrink-0 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #0B3D36 0%, #115E54 55%, #2A8256 100%)" }}>
+            <div className="px-5 py-3.5 shrink-0 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--green-900) 0%, var(--brand-600) 55%, var(--brand-500) 100%)" }}>
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center border border-white/25 shrink-0">
                   <Bot size={18} className="text-white" />
@@ -510,7 +511,7 @@ export function ChatbotWidget() {
                 <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border border-white/20 text-white/60 uppercase tracking-wider">
                   {userCtx.role === "ngo_admin" ? "Admin" : userCtx.role === "volunteer" ? "Volunteer" : "Guest"}
                 </span>
-                <button onClick={() => setOpen(false)} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10">
+                <button onClick={() => setOpen(false)} aria-label="Close assistant" className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10">
                   <X size={14} className="text-white/60" />
                 </button>
               </div>
@@ -566,7 +567,7 @@ export function ChatbotWidget() {
                         initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
                         onClick={() => { router.push(m.action!.path!); setOpen(false); }}
                         className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[12px] font-bold text-white"
-                        style={{ background: "linear-gradient(135deg, #115E54, #2A8256)" }}
+                        style={{ background: "linear-gradient(135deg, var(--brand-600), var(--brand-500))" }}
                       >
                         <Navigation size={12} />
                         {m.action.label ?? "Go there now"}
@@ -581,14 +582,14 @@ export function ChatbotWidget() {
                       style={{ background: "rgba(17,94,84,0.06)", borderColor: "rgba(17,94,84,0.2)" }}
                     >
                       <p className="text-[11px] font-semibold mb-2.5 flex items-center gap-1.5" style={{ color: "var(--text-primary)" }}>
-                        <AlertCircle size={12} style={{ color: "#115E54" }} />
+                        <AlertCircle size={12} style={{ color: "var(--brand-600)" }} />
                         Confirm marking task as complete?
                       </p>
                       <div className="flex gap-2">
                         <button
                           onClick={() => confirmPendingCalls(m.id, m.pendingCalls!)}
                           className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[12px] font-bold text-white shadow"
-                          style={{ background: "linear-gradient(135deg, #115E54, #2A8256)" }}
+                          style={{ background: "linear-gradient(135deg, var(--brand-600), var(--brand-500))" }}
                         >
                           <CheckCircle2 size={12} /> Yes, complete!
                         </button>
@@ -611,7 +612,7 @@ export function ChatbotWidget() {
                           initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.06 }}
                           onClick={() => send(s)}
                           className="text-[11px] px-3 py-1 rounded-full border font-medium transition-all hover:scale-105 active:scale-95"
-                          style={{ background: "var(--bg-surface)", borderColor: "rgba(17,94,84,0.3)", color: "#115E54" }}
+                          style={{ background: "var(--bg-surface)", borderColor: "rgba(17,94,84,0.3)", color: "var(--brand-600)" }}
                         >
                           {s}
                         </motion.button>
@@ -629,7 +630,7 @@ export function ChatbotWidget() {
                       <div className="flex gap-1">
                         {[0, 0.18, 0.36].map((d, i) => (
                           <motion.span key={i} animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.75, delay: d }}
-                            className="w-1.5 h-1.5 rounded-full block" style={{ background: "#2A8256" }}
+                            className="w-1.5 h-1.5 rounded-full block" style={{ background: "var(--brand-500)" }}
                           />
                         ))}
                       </div>
@@ -637,7 +638,7 @@ export function ChatbotWidget() {
                     </div>
                     {executing && (
                       <div className="flex items-center gap-1.5 mt-1">
-                        <Loader2 size={9} className="animate-spin" style={{ color: "#2A8256" }} />
+                        <Loader2 size={9} className="animate-spin" style={{ color: "var(--brand-500)" }} />
                         <span className="text-[10px] opacity-55 italic" style={{ color: "var(--text-primary)" }}>{executing}</span>
                       </div>
                     )}
@@ -653,7 +654,7 @@ export function ChatbotWidget() {
                 {quickActions.map((qa, i) => (
                   <button key={i} onClick={() => send(qa.message)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap border transition-all hover:scale-105 active:scale-95"
-                    style={{ background: "var(--bg-muted)", borderColor: "rgba(17,94,84,0.2)", color: "#115E54" }}
+                    style={{ background: "var(--bg-muted)", borderColor: "rgba(17,94,84,0.2)", color: "var(--brand-600)" }}
                   >
                     {qa.icon}{qa.label}
                   </button>
@@ -694,8 +695,8 @@ export function ChatbotWidget() {
               {/* Image preview */}
               {imagePreview && (
                 <div className="relative inline-block">
-                  <img src={imagePreview} alt="preview" className="h-16 w-16 rounded-xl object-cover border-2 shadow-md" style={{ borderColor: "#2A8256" }} />
-                  <button onClick={clearImage} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center shadow text-[10px] font-bold">
+                  <img src={imagePreview} alt="preview" className="h-16 w-16 rounded-xl object-cover border-2 shadow-md" style={{ borderColor: "var(--brand-500)" }} />
+                  <button onClick={clearImage} aria-label="Remove attached image" className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center shadow text-[10px] font-bold">
                     <X size={9} />
                   </button>
                   {selectedTask && (
@@ -721,7 +722,7 @@ export function ChatbotWidget() {
                   }}
                   title={userCtx.role === "volunteer" ? "Upload photo to verify task" : "Attach image"}
                   className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-all hover:scale-105 active:scale-95"
-                  style={{ background: "var(--bg-muted)", borderColor: "rgba(17,94,84,0.2)", color: "#2A8256" }}
+                  style={{ background: "var(--bg-muted)", borderColor: "rgba(17,94,84,0.2)", color: "var(--brand-500)" }}
                 >
                   {userCtx.role === "volunteer" ? <Camera size={15} /> : <ImagePlus size={15} />}
                 </button>
@@ -751,10 +752,10 @@ export function ChatbotWidget() {
                 <motion.button
                   onClick={() => send()}
                   disabled={loading || (!input.trim() && !imageFile)}
-                  whileHover={{ scale: 1.06 }}
+                  whileHover={HOVER_LIFT_ICON}
                   whileTap={{ scale: 0.9 }}
                   className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-md disabled:opacity-35 transition-opacity"
-                  style={{ background: "linear-gradient(135deg, #115E54, #2A8256)" }}
+                  style={{ background: "linear-gradient(135deg, var(--brand-600), var(--brand-500))" }}
                 >
                   <Send size={14} className="text-white" />
                 </motion.button>

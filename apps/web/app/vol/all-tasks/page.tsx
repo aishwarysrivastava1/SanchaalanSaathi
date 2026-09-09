@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Search, Clock, Loader2, AlertCircle, X, ListChecks, Send } from "lucide-react";
+import { Search, Clock, Loader2, AlertCircle, ListChecks, Send } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { HOVER_LIFT, TAP_PRESS, CARD_LIFT, riseIn } from "../../../lib/motion";
 import { api, friendlyError } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
+import { Modal } from "../../../components/ui/primitives";
 
 type OpenTask = {
   id: string; title: string; description: string;
@@ -67,11 +69,11 @@ export default function AllTasksPage() {
     finally { setSubmitting(false); }
   };
 
-  if (authLoading) return <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-[#48A15E]" /></div>;
+  if (authLoading) return <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-accent" /></div>;
   if (!user) return null;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="p-6 space-y-5">
+    <motion.div {...riseIn} transition={{ duration: 0.4 }} className="p-6 space-y-5">
 
       <AnimatePresence>
         {error && (
@@ -97,14 +99,14 @@ export default function AllTasksPage() {
           placeholder="Search tasks…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-8 pr-3 py-2.5 text-sm bg-white border border-gray-200 rounded-xl outline-none focus:border-[#115E54]/50"
+          className="w-full pl-8 pr-3 py-2.5 text-sm bg-white border border-gray-200 rounded-xl outline-none focus:border-primary/50"
         />
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-[#48A15E]" /></div>
+        <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-accent" /></div>
       ) : filtered.length === 0 ? (
-        <motion.div whileHover={{ y: -2, borderColor: "#95C78F" }}
+        <motion.div whileHover={CARD_LIFT}
           className="rounded-2xl border border-gray-200 p-10 text-center"
           style={{ background: "var(--card-bg)" }}>
           <ListChecks size={28} className="mx-auto mb-3 text-gray-300" />
@@ -115,8 +117,8 @@ export default function AllTasksPage() {
           {filtered.map((task, i) => (
             <motion.div
               key={task.id}
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-              whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(42,130,86,0.12)", borderColor: "#95C78F" }}
+              {...riseIn} transition={{ delay: i * 0.04 }}
+              whileHover={CARD_LIFT}
               className="rounded-2xl border border-gray-200 overflow-hidden"
               style={{ background: "var(--card-bg)" }}
             >
@@ -136,7 +138,7 @@ export default function AllTasksPage() {
                         <span key={s}
                           className={`text-[10px] rounded-full px-2 py-0.5 border font-medium ${
                             task.matched_skills.includes(s)
-                              ? "text-[#2A8256] border-[#2A8256]/30"
+                              ? "text-secondary border-secondary/30"
                               : "text-gray-400 border-gray-200 bg-gray-50"
                           }`}
                           style={task.matched_skills.includes(s) ? { background: "rgba(42,130,86,0.08)" } : {}}
@@ -148,14 +150,14 @@ export default function AllTasksPage() {
                       <div className="mt-2.5 space-y-1">
                         <div className="flex justify-between text-[10px] text-gray-400">
                           <span>Skill match</span>
-                          <span className="font-semibold" style={{ color: "#2A8256" }}>{Math.round(task.match_score * 100)}%</span>
+                          <span className="font-semibold" style={{ color: "var(--brand-500)" }}>{Math.round(task.match_score * 100)}%</span>
                         </div>
                         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }} animate={{ width: `${task.match_score * 100}%` }}
                             transition={{ duration: 0.6, delay: i * 0.04 + 0.2 }}
                             className="h-full rounded-full"
-                            style={{ background: "linear-gradient(90deg,#2A8256,#48A15E)" }}
+                            style={{ background: "linear-gradient(90deg,var(--brand-500),var(--brand-400))" }}
                           />
                         </div>
                       </div>
@@ -183,7 +185,7 @@ export default function AllTasksPage() {
                       <button
                         onClick={() => { setEnrollTarget(task); setError(""); }}
                         className="flex items-center gap-1.5 text-xs text-white rounded-xl px-3 py-2 font-semibold whitespace-nowrap"
-                        style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}
+                        style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}
                       >
                         <Send size={11} /> Request to Join
                       </button>
@@ -197,24 +199,12 @@ export default function AllTasksPage() {
       )}
 
       {/* Enrollment modal */}
-      <AnimatePresence>
-        {enrollTarget && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md"
-            >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <div>
-                  <p className="text-sm font-bold text-gray-800">Request to Join</p>
-                  <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[260px]">{enrollTarget.title}</p>
-                </div>
-                <button onClick={() => setEnrollTarget(null)} className="text-gray-400 hover:text-gray-600 p-1"><X size={16} /></button>
-              </div>
+      <Modal
+        open={Boolean(enrollTarget)}
+        onClose={() => setEnrollTarget(null)}
+        title="Request to Join"
+        subtitle={enrollTarget?.title}
+      >
               <form onSubmit={handleEnroll} className="p-5 space-y-4">
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1.5">
@@ -226,7 +216,7 @@ export default function AllTasksPage() {
                     onChange={(e) => setForm({ ...form, reason: e.target.value })}
                     rows={3}
                     placeholder="Describe your motivation and interest in this task…"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50 resize-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary/50 resize-none"
                   />
                 </div>
                 <div>
@@ -239,23 +229,20 @@ export default function AllTasksPage() {
                     onChange={(e) => setForm({ ...form, why_useful: e.target.value })}
                     rows={3}
                     placeholder="Describe the skills or experience you bring to this task…"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50 resize-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary/50 resize-none"
                   />
                 </div>
                 <motion.button
                   type="submit" disabled={submitting}
-                  whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                  whileHover={HOVER_LIFT} whileTap={TAP_PRESS}
                   className="w-full text-white py-2.5 rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2"
-                  style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}
+                  style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}
                 >
                   {submitting && <Loader2 size={14} className="animate-spin" />}
                   Submit Request
                 </motion.button>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </Modal>
     </motion.div>
   );
 }

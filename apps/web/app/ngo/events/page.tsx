@@ -3,8 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { Calendar, Plus, Trash2, Users, X, Loader2, AlertCircle, CheckCircle2, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { HOVER_LIFT, TAP_PRESS, CARD_LIFT } from "../../../lib/motion";
 import { api, friendlyError } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
+import { Modal } from "../../../components/ui/primitives";
 
 type EventRow = {
   id: string; title: string; description?: string; event_type: string;
@@ -116,7 +118,7 @@ export default function NGOEventsPage() {
 
   if (authLoading || loading) return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 size={22} className="animate-spin text-[#48A15E]" />
+      <Loader2 size={22} className="animate-spin text-accent" />
     </div>
   );
   if (!user) return null;
@@ -135,10 +137,10 @@ export default function NGOEventsPage() {
           <p className="text-[11px] text-white/40 mt-0.5">{events.length} event{events.length !== 1 ? "s" : ""}</p>
         </div>
         <motion.button
-          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+          whileHover={HOVER_LIFT} whileTap={TAP_PRESS}
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 text-white text-xs font-semibold px-3 py-2 rounded-xl"
-          style={{ background: "linear-gradient(135deg, #2A8256 0%, #48A15E 100%)" }}
+          style={{ background: "linear-gradient(135deg, var(--brand-500) 0%, var(--brand-400) 100%)" }}
         >
           <Plus size={13} /> New Event
         </motion.button>
@@ -152,7 +154,7 @@ export default function NGOEventsPage() {
             style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}
           >
             <AlertCircle size={14} /> {error}
-            <button onClick={() => setError("")} className="ml-auto"><X size={13} /></button>
+            <button onClick={() => setError("")} aria-label="Dismiss error" className="ml-auto p-1.5"><X size={13} /></button>
           </motion.div>
         )}
         {saved && (
@@ -168,7 +170,7 @@ export default function NGOEventsPage() {
       {/* Event cards */}
       {events.length === 0 ? (
         <motion.div
-          whileHover={{ y: -2, borderColor: "#95C78F" }}
+          whileHover={CARD_LIFT}
           className="rounded-2xl border border-gray-200 p-10 text-center"
           style={{ background: "var(--card-bg)" }}
         >
@@ -184,7 +186,7 @@ export default function NGOEventsPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              whileHover={{ y: -3, boxShadow: "0 16px 40px rgba(42,130,86,0.15)", borderColor: "#95C78F" }}
+              whileHover={CARD_LIFT}
               className="rounded-2xl border border-gray-200 p-4 space-y-3"
               style={{ background: "var(--card-bg)" }}
             >
@@ -219,9 +221,9 @@ export default function NGOEventsPage() {
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                whileHover={HOVER_LIFT} whileTap={TAP_PRESS}
                 onClick={() => openAttendance(ev)}
-                className="w-full text-xs font-semibold py-2 rounded-xl border border-[#2A8256]/30 text-[#2A8256] hover:bg-[#2A8256]/5 transition-colors"
+                className="w-full text-xs font-semibold py-2 rounded-xl border border-secondary/30 text-secondary hover:bg-secondary/5 transition-colors"
               >
                 Manage Attendance
               </motion.button>
@@ -231,37 +233,22 @@ export default function NGOEventsPage() {
       )}
 
       {/* Create Event Modal */}
-      <AnimatePresence>
-        {showCreate && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
-            onClick={(e) => { if (e.target === e.currentTarget) setShowCreate(false); }}
-          >
-            <motion.div
-              initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }}
-              className="w-full max-w-md rounded-2xl p-6 space-y-4"
-              style={{ background: "var(--modal-bg)" }}
-            >
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-gray-800">New Event</h2>
-                <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
-              </div>
+      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="New Event">
+        <div className="space-y-4 p-6">
 
               <div className="space-y-3">
                 <input
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Event title *"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary/50"
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <div className="relative">
                     <select
                       value={form.event_type}
                       onChange={(e) => setForm({ ...form, event_type: e.target.value })}
-                      className="w-full appearance-none bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50"
+                      className="w-full appearance-none bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary/50"
                     >
                       <option value="drive">Drive</option>
                       <option value="campaign">Campaign</option>
@@ -274,7 +261,7 @@ export default function NGOEventsPage() {
                     <select
                       value={form.status}
                       onChange={(e) => setForm({ ...form, status: e.target.value })}
-                      className="w-full appearance-none bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50"
+                      className="w-full appearance-none bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary/50"
                     >
                       <option value="upcoming">Upcoming</option>
                       <option value="active">Active</option>
@@ -287,13 +274,13 @@ export default function NGOEventsPage() {
                   type="datetime-local"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary/50"
                 />
                 <input
                   value={form.location}
                   onChange={(e) => setForm({ ...form, location: e.target.value })}
                   placeholder="Location *"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary/50"
                 />
                 <input
                   type="number"
@@ -301,56 +288,42 @@ export default function NGOEventsPage() {
                   onChange={(e) => setForm({ ...form, max_volunteers: Number(e.target.value) })}
                   placeholder="Max volunteers (0 = unlimited)"
                   min={0}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary/50"
                 />
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="Description (optional)"
                   rows={2}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50 resize-none"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary/50 resize-none"
                 />
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                whileHover={HOVER_LIFT} whileTap={TAP_PRESS}
                 onClick={handleCreate}
                 disabled={submitting || !form.title || !form.date || !form.location}
                 className="w-full text-white py-2.5 rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2"
-                style={{ background: "linear-gradient(135deg, #2A8256 0%, #48A15E 100%)" }}
+                style={{ background: "linear-gradient(135deg, var(--brand-500) 0%, var(--brand-400) 100%)" }}
               >
                 {submitting && <Loader2 size={14} className="animate-spin" />}
                 Create Event
               </motion.button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      </Modal>
 
       {/* Attendance Modal */}
-      <AnimatePresence>
-        {attendEvent && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
-            onClick={(e) => { if (e.target === e.currentTarget) setAttendEvent(null); }}
-          >
-            <motion.div
-              initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl p-5 space-y-4"
-              style={{ background: "var(--modal-bg)" }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-bold text-gray-800">Attendance</h2>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{attendEvent.title}</p>
-                </div>
-                <button onClick={() => setAttendEvent(null)} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
-              </div>
+      <Modal
+        open={Boolean(attendEvent)}
+        onClose={() => setAttendEvent(null)}
+        title="Attendance"
+        subtitle={attendEvent?.title}
+        maxWidth="max-w-sm"
+      >
+        <div className="space-y-4 p-5">
 
               {attendLoading ? (
-                <div className="flex justify-center py-6"><Loader2 size={20} className="animate-spin text-[#48A15E]" /></div>
+                <div className="flex justify-center py-6"><Loader2 size={20} className="animate-spin text-accent" /></div>
               ) : attendees.length === 0 ? (
                 <p className="text-sm text-gray-400 text-center py-6">No volunteers in your NGO yet.</p>
               ) : (
@@ -369,10 +342,8 @@ export default function NGOEventsPage() {
                   ))}
                 </div>
               )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      </Modal>
     </motion.div>
   );
 }

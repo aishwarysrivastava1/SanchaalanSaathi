@@ -18,6 +18,9 @@ export const viewport: Viewport = {
   ],
   width: 'device-width',
   initialScale: 1,
+  // Required for env(safe-area-inset-*) to resolve on notched devices;
+  // the mobile bottom nav pads itself with it.
+  viewportFit: 'cover',
   // `maximumScale: 1` and `userScalable: false` used to be set here. They
   // disable pinch-zoom on every mobile browser -- a WCAG 1.4.4 failure, and a
   // real problem for field volunteers reading task detail one-handed outdoors
@@ -47,7 +50,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${font.className} bg-[#F5F6F1] dark:bg-gray-950 text-gray-900 dark:text-gray-100`}>
+      <body className={`${font.className} bg-canvas dark:bg-gray-950 text-gray-900 dark:text-gray-100`}>
         {/* First tab stop on every page: lets keyboard and screen-reader users
             jump straight past the sidebar nav to the page content. */}
         <a href="#main-content" className="skip-link">

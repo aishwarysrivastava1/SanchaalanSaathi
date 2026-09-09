@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
+import { HOVER_LIFT_ICON, riseIn } from "../lib/motion";
 import {
   Building2, Users, BarChart3, Zap, Shield,
   Menu, X, ArrowRight, MapPin, Bell, CheckCircle2,
@@ -208,7 +209,7 @@ function LoginCard({ role, router, isDark }: { role: "ngo_admin" | "volunteer"; 
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 12, background: isNgo ? "linear-gradient(135deg, #2A8256, #48A15E)" : "linear-gradient(135deg, #1a7a5e, #2A8256)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 40, height: 40, borderRadius: 12, background: isNgo ? "linear-gradient(135deg, var(--brand-500), var(--brand-400))" : "linear-gradient(135deg, #1a7a5e, var(--brand-500))", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {isNgo ? <Building2 size={20} color="#fff" /> : <Users size={20} color="#fff" />}
         </div>
         <div>
@@ -398,7 +399,7 @@ export default function LandingPage() {
         <div style={{ display: "flex", gap: 6 }}>
           {[0, 1, 2].map((i) => (
             <motion.div key={i} animate={{ y: [0, -10, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
-              style={{ width: 8, height: 8, borderRadius: 4, background: "#48A15E" }} />
+              style={{ width: 8, height: 8, borderRadius: 4, background: "var(--brand-400)" }} />
           ))}
         </div>
       </div>
@@ -416,7 +417,7 @@ export default function LandingPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo/logo-icon.png" alt="Sanchaalan Saathi" style={{ height: 34, width: 34, objectFit: "contain" }} />
             <div>
-              <p style={{ color: isDark ? "#fff" : "#115E54", fontWeight: 700, fontSize: 15, margin: 0, letterSpacing: "-0.3px" }}>Sanchaalan Saathi</p>
+              <p style={{ color: isDark ? "#fff" : "var(--brand-600)", fontWeight: 700, fontSize: 15, margin: 0, letterSpacing: "-0.3px" }}>Sanchaalan Saathi</p>
               <p style={{ color: T.textMuted, fontSize: 10, margin: 0 }}>NGO Coordination Platform</p>
             </div>
           </div>
@@ -434,14 +435,14 @@ export default function LandingPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
             <ThemeToggle size="sm" />
             <button className="nav-cta" onClick={() => scrollTo("login")}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 20px", borderRadius: 10, background: "linear-gradient(135deg, #2A8256, #48A15E)", color: "#fff", fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer", transition: "opacity 0.2s, transform 0.2s", boxShadow: "0 4px 14px rgba(42,130,86,0.35)", fontFamily: "inherit", whiteSpace: "nowrap" }}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 20px", borderRadius: 10, background: "linear-gradient(135deg, var(--brand-500), var(--brand-400))", color: "#fff", fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer", transition: "opacity 0.2s, transform 0.2s", boxShadow: "0 4px 14px rgba(42,130,86,0.35)", fontFamily: "inherit", whiteSpace: "nowrap" }}
               onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "translateY(-1px)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}
             >Get Started <ArrowRight size={14} /></button>
           </div>
 
           <button className="hamburger" aria-label="Toggle menu" onClick={() => setMenuOpen(!menuOpen)}
-            style={{ display: "none", background: "none", border: "none", color: isDark ? "#fff" : "#115E54", cursor: "pointer", padding: 4, marginLeft: 12 }}>
+            style={{ display: "none", background: "none", border: "none", color: isDark ? "#fff" : "var(--brand-600)", cursor: "pointer", padding: 4, marginLeft: 12 }}>
             {menuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
@@ -460,7 +461,7 @@ export default function LandingPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
                   <ThemeToggle size="sm" />
                   <button onClick={() => { scrollTo("login"); setMenuOpen(false); }}
-                    style={{ flex: 1, padding: "12px 0", borderRadius: 10, background: "linear-gradient(135deg, #2A8256, #48A15E)", color: "#fff", fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+                    style={{ flex: 1, padding: "12px 0", borderRadius: 10, background: "linear-gradient(135deg, var(--brand-500), var(--brand-400))", color: "#fff", fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "inherit" }}>
                     Get Started
                   </button>
                 </div>
@@ -487,29 +488,29 @@ export default function LandingPage() {
             <span className="text-shimmer" style={{ fontSize: 13, fontWeight: 600 }}>AI-Powered NGO Coordination</span>
           </motion.div>
 
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
+          <motion.h1 {...riseIn} transition={{ duration: 0.6, delay: 0.1 }}
             style={{ color: T.text, fontSize: "clamp(40px, 7vw, 72px)", fontWeight: 900, margin: "0 0 22px", lineHeight: 1.06, letterSpacing: "-2.5px" }}>
             Coordinate NGOs.{" "}
-            <span style={{ background: "linear-gradient(135deg, #48A15E 0%, #95C78F 50%, #48A15E 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundSize: "200% auto", animation: "shimmer 4s linear infinite" }}>
+            <span style={{ background: "linear-gradient(135deg, var(--brand-400) 0%, var(--brand-300) 50%, var(--brand-400) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundSize: "200% auto", animation: "shimmer 4s linear infinite" }}>
               Amplify Impact.
             </span>
           </motion.h1>
 
-          <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}
+          <motion.p {...riseIn} transition={{ duration: 0.6, delay: 0.2 }}
             style={{ color: T.textSub, fontSize: "clamp(16px, 2.5vw, 20px)", lineHeight: 1.68, margin: "0 auto 48px", maxWidth: 560 }}>
             AI-powered volunteer matching, real-time task coordination, and deep analytics — for every NGO, at zero cost.
           </motion.p>
 
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
+          <motion.div {...riseIn} transition={{ duration: 0.6, delay: 0.3 }}
             className="hero-btns" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <button onClick={() => scrollTo("login")}
-              style={{ display: "flex", alignItems: "center", gap: 8, padding: "15px 30px", borderRadius: 12, background: "linear-gradient(135deg, #2A8256, #48A15E)", color: "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: "pointer", boxShadow: "0 8px 28px rgba(42,130,86,0.45)", transition: "transform 0.2s, box-shadow 0.2s", fontFamily: "inherit" }}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "15px 30px", borderRadius: 12, background: "linear-gradient(135deg, var(--brand-500), var(--brand-400))", color: "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: "pointer", boxShadow: "0 8px 28px rgba(42,130,86,0.45)", transition: "transform 0.2s, box-shadow 0.2s", fontFamily: "inherit" }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 14px 36px rgba(42,130,86,0.55)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 8px 28px rgba(42,130,86,0.45)"; }}>
               <Users size={18} /> Join as Volunteer
             </button>
             <button onClick={() => scrollTo("login")}
-              style={{ display: "flex", alignItems: "center", gap: 8, padding: "15px 30px", borderRadius: 12, background: isDark ? "rgba(255,255,255,0.09)" : "rgba(17,94,84,0.07)", border: `1.5px solid ${isDark ? "rgba(255,255,255,0.18)" : "rgba(17,94,84,0.22)"}`, color: isDark ? "#fff" : "#115E54", fontSize: 16, fontWeight: 700, cursor: "pointer", transition: "background 0.2s, border-color 0.2s", fontFamily: "inherit" }}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "15px 30px", borderRadius: 12, background: isDark ? "rgba(255,255,255,0.09)" : "rgba(17,94,84,0.07)", border: `1.5px solid ${isDark ? "rgba(255,255,255,0.18)" : "rgba(17,94,84,0.22)"}`, color: isDark ? "#fff" : "var(--brand-600)", fontSize: 16, fontWeight: 700, cursor: "pointer", transition: "background 0.2s, border-color 0.2s", fontFamily: "inherit" }}
               onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.15)" : "rgba(17,94,84,0.12)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.09)" : "rgba(17,94,84,0.07)"; }}>
               <Building2 size={18} /> Register as NGO
@@ -532,7 +533,7 @@ export default function LandingPage() {
       <section id="features" style={{ padding: "96px 24px", position: "relative" }}>
         <div style={{ maxWidth: 1120, margin: "0 auto" }}>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 60 }}>
-            <p style={{ color: "#48A15E", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 12px" }}>Platform Features</p>
+            <p style={{ color: "var(--brand-400)", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 12px" }}>Platform Features</p>
             <h2 style={{ color: T.text, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, margin: "0 0 14px", letterSpacing: "-1px" }}>Everything your NGO needs</h2>
             <p style={{ color: T.textMuted, fontSize: 17, margin: 0, maxWidth: 460, marginLeft: "auto", marginRight: "auto" }}>
               One platform for administrators and volunteers — every workflow, covered.
@@ -556,10 +557,10 @@ export default function LandingPage() {
                 onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = T.cardBorder; el.style.transform = ""; el.style.boxShadow = isDark ? "none" : "0 2px 8px rgba(0,0,0,0.04)"; }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
-                  <motion.div whileHover={{ scale: 1.12 }} style={{ width: 46, height: 46, borderRadius: 13, background: T.iconBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <motion.div whileHover={HOVER_LIFT_ICON} style={{ width: 46, height: 46, borderRadius: 13, background: T.iconBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {f.icon}
                   </motion.div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: f.tag === "Admin" ? "#48A15E" : "#2A8256", background: f.tag === "Admin" ? "rgba(42,130,86,0.12)" : "rgba(42,130,86,0.08)", padding: "3px 10px", borderRadius: 100 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: f.tag === "Admin" ? "var(--brand-400)" : "var(--brand-500)", background: f.tag === "Admin" ? "rgba(42,130,86,0.12)" : "rgba(42,130,86,0.08)", padding: "3px 10px", borderRadius: 100 }}>
                     {f.tag}
                   </span>
                 </div>
@@ -576,7 +577,7 @@ export default function LandingPage() {
         <div style={{ position: "absolute", inset: 0, background: T.sectionBg, pointerEvents: "none" }} />
         <div style={{ maxWidth: 1000, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 68 }}>
-            <p style={{ color: "#48A15E", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 12px" }}>How It Works</p>
+            <p style={{ color: "var(--brand-400)", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 12px" }}>How It Works</p>
             <h2 style={{ color: T.text, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, margin: "0 0 14px", letterSpacing: "-1px" }}>Up and running in minutes</h2>
             <p style={{ color: T.textMuted, fontSize: 17, margin: 0 }}>Three steps to transform how your NGO operates.</p>
           </motion.div>
@@ -593,7 +594,7 @@ export default function LandingPage() {
                   <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 64, height: 64, borderRadius: "50%", background: "rgba(42,130,86,0.12)", marginBottom: 22, border: "2px solid rgba(72,161,94,0.2)" }}>
                     {step.icon}
                   </div>
-                  <p style={{ color: "#48A15E", fontSize: 11, fontWeight: 800, letterSpacing: "0.12em", margin: "0 0 10px", textTransform: "uppercase" }}>{step.num}</p>
+                  <p style={{ color: "var(--brand-400)", fontSize: 11, fontWeight: 800, letterSpacing: "0.12em", margin: "0 0 10px", textTransform: "uppercase" }}>{step.num}</p>
                   <h3 style={{ color: T.text, fontSize: 20, fontWeight: 700, margin: "0 0 12px" }}>{step.title}</h3>
                   <p style={{ color: T.textMuted, fontSize: 14, lineHeight: 1.68, margin: 0 }}>{step.desc}</p>
                 </motion.div>
@@ -612,7 +613,7 @@ export default function LandingPage() {
       <section id="impact" style={{ padding: "96px 24px" }}>
         <div style={{ maxWidth: 1120, margin: "0 auto" }}>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 60 }}>
-            <p style={{ color: "#48A15E", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 12px" }}>Why It Works</p>
+            <p style={{ color: "var(--brand-400)", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 12px" }}>Why It Works</p>
             <h2 style={{ color: T.text, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, margin: "0 0 14px", letterSpacing: "-1px" }}>Built to scale with your mission</h2>
             <p style={{ color: T.textMuted, fontSize: 17, margin: 0, maxWidth: 480, marginLeft: "auto", marginRight: "auto" }}>
               From local community groups to large-scale relief operations.
@@ -659,11 +660,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── LOGIN ────────────────────────────────────────────────────────────── */}
-      <section id="login" ref={loginRef} style={{ padding: "96px 24px 120px", position: "relative" }}>
+      <section id="login" ref={loginRef} style={{ padding: "96px 24px 120px", position: "relative", overflowX: "hidden" }}>
         <div style={{ position: "absolute", top: "5%", left: "50%", transform: "translateX(-50%)", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, rgba(42,130,86,0.09) 0%, transparent 70%)", filter: "blur(80px)", pointerEvents: "none" }} />
         <div style={{ maxWidth: 960, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 52 }}>
-            <p style={{ color: "#48A15E", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 12px" }}>Get Started</p>
+            <p style={{ color: "var(--brand-400)", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 12px" }}>Get Started</p>
             <h2 style={{ color: T.text, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, margin: "0 0 14px", letterSpacing: "-1px" }}>Choose your role</h2>
             <p style={{ color: T.textMuted, fontSize: 17, margin: 0 }}>One platform, two portals — each built for the way you work.</p>
           </motion.div>
@@ -689,7 +690,7 @@ export default function LandingPage() {
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo/logo-icon.png" alt="Sanchaalan Saathi" style={{ height: 32, width: 32, objectFit: "contain" }} />
-                <p style={{ color: isDark ? "#fff" : "#115E54", fontWeight: 700, fontSize: 15, margin: 0 }}>Sanchaalan Saathi</p>
+                <p style={{ color: isDark ? "#fff" : "var(--brand-600)", fontWeight: 700, fontSize: 15, margin: 0 }}>Sanchaalan Saathi</p>
               </div>
               <p style={{ color: T.footerText, fontSize: 14, lineHeight: 1.68, margin: 0 }}>
                 AI-powered NGO coordination — helping organisations and volunteers work smarter together.
@@ -715,7 +716,7 @@ export default function LandingPage() {
             <p style={{ color: T.footerMuted, fontSize: 13, margin: 0 }}>© 2025 Sanchaalan Saathi. All rights reserved.</p>
             <p style={{ color: T.footerMuted, fontSize: 13, margin: 0 }}>
               Built by{" "}
-              <span style={{ color: isDark ? "rgba(255,255,255,0.55)" : "#48A15E", fontWeight: 600 }}>Aishwary Srivastava</span>
+              <span style={{ color: isDark ? "rgba(255,255,255,0.55)" : "var(--brand-400)", fontWeight: 600 }}>Aishwary Srivastava</span>
             </p>
           </div>
         </div>

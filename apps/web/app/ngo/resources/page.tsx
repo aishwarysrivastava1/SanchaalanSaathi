@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Plus, X, Loader2, AlertCircle, ChevronDown, Link2 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { Plus, Loader2, AlertCircle, ChevronDown, Link2 } from "lucide-react";
+import { motion } from "motion/react";
+import { HOVER_LIFT, TAP_PRESS, CARD_LIFT } from "../../../lib/motion";
 import { api, friendlyError } from "../../../lib/ngo-api";
 import { useNGOAuth } from "../../../lib/ngo-auth";
+import { Modal } from "../../../components/ui/primitives";
 
 type Resource = {
   id: string;
@@ -71,7 +73,7 @@ export default function ResourcesPage() {
     finally { setAllocating(null); }
   };
 
-  if (authLoading) return <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-[#48A15E]" /></div>;
+  if (authLoading) return <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-accent" /></div>;
   if (!user) return null;
 
   return (
@@ -85,10 +87,10 @@ export default function ResourcesPage() {
         <p className="text-xs text-white/50">{resources.length} resource{resources.length !== 1 ? "s" : ""} tracked</p>
         <motion.button
           onClick={() => setShowCreate(true)}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={HOVER_LIFT}
+          whileTap={TAP_PRESS}
           className="flex items-center gap-2 text-white px-4 py-2 rounded-xl text-sm font-semibold"
-          style={{ background: "linear-gradient(135deg, #2A8256 0%, #48A15E 100%)" }}
+          style={{ background: "linear-gradient(135deg, var(--brand-500) 0%, var(--brand-400) 100%)" }}
         >
           <Plus size={14} /> Add Resource
         </motion.button>
@@ -101,10 +103,10 @@ export default function ResourcesPage() {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-[#48A15E]" /></div>
+        <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-accent" /></div>
       ) : resources.length === 0 ? (
         <motion.div
-          whileHover={{ y: -2, borderColor: "#95C78F" }}
+          whileHover={CARD_LIFT}
           className="rounded-2xl border border-gray-200 p-8 text-center text-sm text-gray-400"
           style={{ background: "var(--card-bg)" }}
         >
@@ -120,7 +122,7 @@ export default function ResourcesPage() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06 }}
-                whileHover={{ y: -4, boxShadow: "0 16px 36px rgba(42,130,86,0.15)", borderColor: "#95C78F" }}
+                whileHover={CARD_LIFT}
                 className="rounded-2xl border border-gray-200 p-5 flex flex-col gap-3"
                 style={{ background: "var(--card-bg)" }}
               >
@@ -161,7 +163,7 @@ export default function ResourcesPage() {
                     <button
                       onClick={() => handleAllocate(r.id, allocateTarget.resourceId === r.id ? allocateTarget.taskId : "")}
                       disabled={allocating === r.id || (allocateTarget.resourceId !== r.id || !allocateTarget.taskId)}
-                      className="flex items-center gap-1 text-xs text-[#2A8256] rounded-lg px-2.5 py-1.5 font-semibold transition-all disabled:opacity-40"
+                      className="flex items-center gap-1 text-xs text-secondary rounded-lg px-2.5 py-1.5 font-semibold transition-all disabled:opacity-40"
                       style={{ background: "rgba(42,130,86,0.1)", border: "1px solid rgba(42,130,86,0.2)" }}
                     >
                       {allocating === r.id ? <Loader2 size={10} className="animate-spin" /> : <Link2 size={10} />}
@@ -176,25 +178,12 @@ export default function ResourcesPage() {
       )}
 
       {/* Create modal */}
-      <AnimatePresence>
-        {showCreate && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm"
-            >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <p className="text-sm font-bold text-gray-800">Add Resource</p>
-                <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-600 p-1"><X size={16} /></button>
-              </div>
+      <Modal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        title="Add Resource"
+        maxWidth="max-w-sm"
+      >
               <form onSubmit={handleCreate} className="p-5 space-y-4">
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Resource Type</label>
@@ -203,7 +192,7 @@ export default function ResourcesPage() {
                     value={form.type}
                     onChange={(e) => setForm({ ...form, type: e.target.value })}
                     placeholder="e.g. First Aid Kits, Vehicles, Laptops"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary/50"
                   />
                 </div>
                 <div>
@@ -214,25 +203,22 @@ export default function ResourcesPage() {
                     min={1}
                     value={form.quantity}
                     onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 1 })}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#115E54]/50"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary/50"
                   />
                 </div>
                 <motion.button
                   type="submit"
                   disabled={submitting}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={HOVER_LIFT}
+                  whileTap={TAP_PRESS}
                   className="w-full text-white py-2.5 rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2"
-                  style={{ background: "linear-gradient(135deg, #2A8256 0%, #48A15E 100%)" }}
+                  style={{ background: "linear-gradient(135deg, var(--brand-500) 0%, var(--brand-400) 100%)" }}
                 >
                   {submitting && <Loader2 size={14} className="animate-spin" />}
                   Add Resource
                 </motion.button>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </Modal>
     </motion.div>
   );
 }

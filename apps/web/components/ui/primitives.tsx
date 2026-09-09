@@ -8,6 +8,8 @@
  * every page should reach for.
  */
 import React from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { SPATIAL } from "../../lib/motion";
 
 type Div = React.HTMLAttributes<HTMLDivElement>;
 
@@ -228,7 +230,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
         <button
           type="button"
           onClick={onRetry}
-          className="mt-4 rounded-lg bg-[#115E54] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0d4a42]"
+          className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dim"
         >
           Try again
         </button>
@@ -240,7 +242,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
 // ── Controls ──────────────────────────────────────────────────────────────────
 
 const BUTTON_VARIANTS = {
-  primary: "bg-[#115E54] text-white hover:bg-[#0d4a42] disabled:bg-[#115E54]/50",
+  primary: "bg-primary text-white hover:bg-primary-dim disabled:bg-primary/50",
   secondary:
     "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15",
   ghost: "text-gray-600 hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/10",
@@ -372,5 +374,140 @@ export function DataTable<T>({
         </tbody>
       </table>
     </div>
+  );
+}
+
+// -- Modal --------------------------------------------------------------------
+
+const FOCUSABLE =
+  'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),' +
+  'textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+/**
+ * Ten modals were hand-rolled across six pages with no dialog semantics at all:
+ * no role, no Escape, and no focus trap -- so a keyboard user tabbed straight
+ * out of an open modal into the page behind it. That behaviour lives here now.
+ *
+ * `title` is always the accessible name, even when `chrome` is false and the
+ * caller draws its own header, so a dialog can never end up unnamed.
+ */
+export function Modal({
+  open,
+  onClose,
+  title,
+  subtitle,
+  icon,
+  chrome = true,
+  children,
+  maxWidth = "max-w-md",
+  panelClassName,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: React.ReactNode;
+  icon?: React.ReactNode;
+  chrome?: boolean;
+  children: React.ReactNode;
+  maxWidth?: string;
+  panelClassName?: string;
+}) {
+  const panelRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    const restoreTo = document.activeElement as HTMLElement | null;
+    const first = panelRef.current?.querySelector<HTMLElement>(FOCUSABLE);
+    (first ?? panelRef.current)?.focus();
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const items = Array.from(
+        panelRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [],
+      ).filter((el) => el.offsetParent !== null);
+      if (items.length === 0) return;
+
+      const edge = event.shiftKey ? items[0] : items[items.length - 1];
+      if (document.activeElement === edge) {
+        event.preventDefault();
+        (event.shiftKey ? items[items.length - 1] : items[0]).focus();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+      restoreTo?.focus();
+    };
+  }, [open, onClose]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+        >
+          <motion.div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            tabIndex={-1}
+            onClick={(event) => event.stopPropagation()}
+            initial={{ scale: 0.92, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.92, opacity: 0 }}
+            transition={SPATIAL}
+            className={cx(
+              "max-h-[90vh] w-full overflow-y-auto rounded-2xl shadow-2xl",
+              "bg-white dark:bg-[#0d3028]",
+              maxWidth,
+              panelClassName,
+            )}
+          >
+            {chrome && (
+              <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-gray-100 bg-white px-5 py-4 dark:border-white/10 dark:bg-[#0d3028]">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-2 text-sm font-bold text-gray-800 dark:text-gray-100">
+                    {icon}
+                    {title}
+                  </p>
+                  {subtitle && (
+                    <p className="mt-0.5 truncate text-xs text-gray-400 dark:text-white/40">
+                      {subtitle}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-white"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

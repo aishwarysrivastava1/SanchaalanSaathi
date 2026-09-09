@@ -41,12 +41,12 @@ function VolunteerPanel({ data, isDark }: { data: VolunteerPin; isDark: boolean 
       <div className="flex items-center gap-3">
         <div
           className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-          style={{ background: data.status === "available" ? "linear-gradient(135deg,#2A8256,#48A15E)" : "linear-gradient(135deg,#d97706,#fbbf24)" }}
+          style={{ background: data.status === "available" ? "linear-gradient(135deg,var(--brand-500),var(--brand-400))" : "linear-gradient(135deg,#d97706,#fbbf24)" }}
         >
           {data.initials}
         </div>
         <div>
-          <p className="text-sm font-bold" style={{ color: isDark ? "#F5F6F1" : "#1f2937" }}>{data.name}</p>
+          <p className="text-sm font-bold" style={{ color: isDark ? "var(--brand-50)" : "#1f2937" }}>{data.name}</p>
           <span
             className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
             style={isDark ? { background: badge?.bg, color: badge?.color } : undefined}
@@ -87,10 +87,10 @@ function VolunteerPanel({ data, isDark }: { data: VolunteerPin; isDark: boolean 
         >
           <div className="flex justify-between text-[10px]" style={{ color: isDark ? "#A4B4B1" : "#9ca3af" }}>
             <span>Performance</span>
-            <span className="font-bold" style={{ color: "#2A8256" }}>{data.performanceScore.toFixed(0)}%</span>
+            <span className="font-bold" style={{ color: "var(--brand-500)" }}>{data.performanceScore.toFixed(0)}%</span>
           </div>
           <div className="h-1.5 rounded-full overflow-hidden" style={{ background: isDark ? "rgba(42,130,86,0.2)" : "#E5E7EB" }}>
-            <div className="h-full rounded-full" style={{ width: `${data.performanceScore}%`, background: "linear-gradient(90deg,#2A8256,#48A15E)" }} />
+            <div className="h-full rounded-full" style={{ width: `${data.performanceScore}%`, background: "linear-gradient(90deg,var(--brand-500),var(--brand-400))" }} />
           </div>
           <p className="text-[10px]" style={{ color: isDark ? "#A4B4B1" : "#9ca3af" }}>{data.completedTasks ?? 0} tasks completed</p>
         </div>
@@ -102,7 +102,7 @@ function VolunteerPanel({ data, isDark }: { data: VolunteerPin; isDark: boolean 
       )}
       <button
         className="w-full text-white text-xs font-bold py-2.5 rounded-xl transition-opacity hover:opacity-90"
-        style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}
+        style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}
       >
         Assign to Operation
       </button>
@@ -116,7 +116,7 @@ function OperationPanel({ data, isDark }: { data: OperationPin; isDark: boolean 
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm font-bold leading-tight" style={{ color: isDark ? "#F5F6F1" : "#1f2937" }}>{data.title}</p>
+        <p className="text-sm font-bold leading-tight" style={{ color: isDark ? "var(--brand-50)" : "#1f2937" }}>{data.title}</p>
         <span
           className="text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1 inline-block"
           style={isDark ? { background: badge?.bg, color: badge?.color } : undefined}
@@ -130,7 +130,7 @@ function OperationPanel({ data, isDark }: { data: OperationPin; isDark: boolean 
       <div>
         <div className="flex justify-between text-[10px] mb-1.5" style={{ color: isDark ? "#A4B4B1" : "#9ca3af" }}>
           <span>Volunteers assigned</span>
-          <span className="font-semibold" style={{ color: isDark ? "#F5F6F1" : "#374151" }}>{data.assigned}/{data.needed}</span>
+          <span className="font-semibold" style={{ color: isDark ? "var(--brand-50)" : "#374151" }}>{data.assigned}/{data.needed}</span>
         </div>
         <div className="h-2 rounded-full overflow-hidden" style={{ background: isDark ? "rgba(42,130,86,0.2)" : "#E5E7EB" }}>
           <div
@@ -146,7 +146,7 @@ function OperationPanel({ data, isDark }: { data: OperationPin; isDark: boolean 
       </div>
       <button
         className="w-full text-white text-xs font-bold py-2.5 rounded-xl transition-opacity hover:opacity-90"
-        style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}
+        style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}
       >
         Deploy Resources
       </button>
@@ -167,7 +167,7 @@ function ResourcePanel({ data, isDark }: { data: ResourcePin; isDark: boolean })
           {icons[data.type] ?? "📦"}
         </div>
         <div>
-          <p className="text-sm font-bold leading-tight" style={{ color: isDark ? "#F5F6F1" : "#1f2937" }}>{data.title}</p>
+          <p className="text-sm font-bold leading-tight" style={{ color: isDark ? "var(--brand-50)" : "#1f2937" }}>{data.title}</p>
           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full mt-0.5 inline-block" style={isDark ? { background: badge?.bg, color: badge?.color } : undefined}>
             {data.type}
           </span>
@@ -175,13 +175,13 @@ function ResourcePanel({ data, isDark }: { data: ResourcePin; isDark: boolean })
       </div>
       <div className="rounded-xl px-4 py-3 flex items-center justify-between border" style={{ background: isDark ? "#1A352F" : "#F9FAFB", borderColor: isDark ? "#23473E" : "#E5E7EB" }}>
         <p className="text-xs" style={{ color: isDark ? "#A4B4B1" : "#6b7280" }}>Stock available</p>
-        <p className="text-lg font-bold" style={{ color: data.stock > 100 ? "#2A8256" : "#d97706" }}>
+        <p className="text-lg font-bold" style={{ color: data.stock > 100 ? "var(--brand-500)" : "#d97706" }}>
           {data.stock}
         </p>
       </div>
       <button
         className="w-full text-white text-xs font-bold py-2.5 rounded-xl transition-opacity hover:opacity-90"
-        style={{ background: "linear-gradient(135deg,#2A8256,#48A15E)" }}
+        style={{ background: "linear-gradient(135deg,var(--brand-500),var(--brand-400))" }}
       >
         Allocate Resource
       </button>
@@ -219,7 +219,7 @@ export default function EntityDetailPanel({ entity, onClose }: Props) {
       <div className="mb-4 flex items-center gap-1.5 text-[10px] uppercase tracking-wide font-semibold" style={{ color: isDark ? "#A4B4B1" : "#9ca3af" }}>
         {entity.type === "volunteer" && <><User size={10} /> Volunteer</>}
         {entity.type === "operation" && <><Zap size={10} className="text-red-500" /> Operation</>}
-        {entity.type === "resource"  && <><Package size={10} className="text-[#2A8256]" /> Resource</>}
+        {entity.type === "resource"  && <><Package size={10} className="text-secondary" /> Resource</>}
       </div>
 
       {entity.type === "volunteer" && <VolunteerPanel data={entity.data as VolunteerPin} isDark={isDark} />}
